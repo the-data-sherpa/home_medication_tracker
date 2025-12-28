@@ -190,37 +190,43 @@ export async function showAssignMedicationForm() {
                 
                 // Handle frequency override
                 if (freqTypeOverride === 'fixed') {
-                    const freq = document.getElementById('assign-frequency').value;
-                    if (freq) {
-                        const freqValue = parseFloat(freq);
-                        if (freqValue <= 0) {
-                            showToast('Frequency must be greater than 0', 'error');
-                            setButtonLoading(submitButton, false);
-                            return;
-                        }
-                        data.frequency_hours = freqValue;
+                    const freq = document.getElementById('assign-frequency').value.trim();
+                    if (!freq) {
+                        showToast('Frequency is required when using fixed frequency type', 'error');
+                        setButtonLoading(submitButton, false);
+                        return;
                     }
+                    const freqValue = parseFloat(freq);
+                    if (isNaN(freqValue) || freqValue <= 0) {
+                        showToast('Frequency must be a number greater than 0', 'error');
+                        setButtonLoading(submitButton, false);
+                        return;
+                    }
+                    data.frequency_hours = freqValue;
                     data.frequency_min_hours = null;
                     data.frequency_max_hours = null;
                 } else if (freqTypeOverride === 'range') {
-                    const minFreq = document.getElementById('assign-frequency-min').value;
-                    const maxFreq = document.getElementById('assign-frequency-max').value;
-                    if (minFreq && maxFreq) {
-                        const minValue = parseFloat(minFreq);
-                        const maxValue = parseFloat(maxFreq);
-                        if (minValue <= 0 || maxValue <= 0) {
-                            showToast('Frequencies must be greater than 0', 'error');
-                            setButtonLoading(submitButton, false);
-                            return;
-                        }
-                        if (minValue >= maxValue) {
-                            showToast('Minimum frequency must be less than maximum', 'error');
-                            setButtonLoading(submitButton, false);
-                            return;
-                        }
-                        data.frequency_min_hours = minValue;
-                        data.frequency_max_hours = maxValue;
+                    const minFreq = document.getElementById('assign-frequency-min').value.trim();
+                    const maxFreq = document.getElementById('assign-frequency-max').value.trim();
+                    if (!minFreq || !maxFreq) {
+                        showToast('Both minimum and maximum frequencies are required when using range frequency type', 'error');
+                        setButtonLoading(submitButton, false);
+                        return;
                     }
+                    const minValue = parseFloat(minFreq);
+                    const maxValue = parseFloat(maxFreq);
+                    if (isNaN(minValue) || isNaN(maxValue) || minValue <= 0 || maxValue <= 0) {
+                        showToast('Frequencies must be numbers greater than 0', 'error');
+                        setButtonLoading(submitButton, false);
+                        return;
+                    }
+                    if (minValue >= maxValue) {
+                        showToast('Minimum frequency must be less than maximum', 'error');
+                        setButtonLoading(submitButton, false);
+                        return;
+                    }
+                    data.frequency_min_hours = minValue;
+                    data.frequency_max_hours = maxValue;
                     data.frequency_hours = null;
                 } else {
                     // Use medication default - don't set frequency fields
@@ -441,37 +447,43 @@ export async function showEditAssignmentForm(assignment) {
                 
                 // Handle frequency override
                 if (freqTypeOverride === 'fixed') {
-                    const freq = document.getElementById('edit-frequency').value;
-                    if (freq) {
-                        const freqValue = parseFloat(freq);
-                        if (freqValue <= 0) {
-                            showToast('Frequency must be greater than 0', 'error');
-                            setButtonLoading(submitButton, false);
-                            return;
-                        }
-                        data.frequency_hours = freqValue;
+                    const freq = document.getElementById('edit-frequency').value.trim();
+                    if (!freq) {
+                        showToast('Frequency is required when using fixed frequency type', 'error');
+                        setButtonLoading(submitButton, false);
+                        return;
                     }
+                    const freqValue = parseFloat(freq);
+                    if (isNaN(freqValue) || freqValue <= 0) {
+                        showToast('Frequency must be a number greater than 0', 'error');
+                        setButtonLoading(submitButton, false);
+                        return;
+                    }
+                    data.frequency_hours = freqValue;
                     data.frequency_min_hours = null;
                     data.frequency_max_hours = null;
                 } else if (freqTypeOverride === 'range') {
-                    const minFreq = document.getElementById('edit-frequency-min').value;
-                    const maxFreq = document.getElementById('edit-frequency-max').value;
-                    if (minFreq && maxFreq) {
-                        const minValue = parseFloat(minFreq);
-                        const maxValue = parseFloat(maxFreq);
-                        if (minValue <= 0 || maxValue <= 0) {
-                            showToast('Frequencies must be greater than 0', 'error');
-                            setButtonLoading(submitButton, false);
-                            return;
-                        }
-                        if (minValue >= maxValue) {
-                            showToast('Minimum frequency must be less than maximum', 'error');
-                            setButtonLoading(submitButton, false);
-                            return;
-                        }
-                        data.frequency_min_hours = minValue;
-                        data.frequency_max_hours = maxValue;
+                    const minFreq = document.getElementById('edit-frequency-min').value.trim();
+                    const maxFreq = document.getElementById('edit-frequency-max').value.trim();
+                    if (!minFreq || !maxFreq) {
+                        showToast('Both minimum and maximum frequencies are required when using range frequency type', 'error');
+                        setButtonLoading(submitButton, false);
+                        return;
                     }
+                    const minValue = parseFloat(minFreq);
+                    const maxValue = parseFloat(maxFreq);
+                    if (isNaN(minValue) || isNaN(maxValue) || minValue <= 0 || maxValue <= 0) {
+                        showToast('Frequencies must be numbers greater than 0', 'error');
+                        setButtonLoading(submitButton, false);
+                        return;
+                    }
+                    if (minValue >= maxValue) {
+                        showToast('Minimum frequency must be less than maximum', 'error');
+                        setButtonLoading(submitButton, false);
+                        return;
+                    }
+                    data.frequency_min_hours = minValue;
+                    data.frequency_max_hours = maxValue;
                     data.frequency_hours = null;
                 } else {
                     // Use medication default - clear frequency fields
