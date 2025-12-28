@@ -1,6 +1,6 @@
 /** Family member management */
 import { familyMembersAPI } from './api.js';
-import { showToast, showModal, closeModal, setButtonLoading, showDeleteConfirmation } from './app.js';
+import { showToast, showModal, closeModal, setButtonLoading, showDeleteConfirmation, validateField, showValidationMessage } from './app.js';
 
 let familyMembers = [];
 
@@ -18,7 +18,9 @@ export async function loadFamilyMembers() {
         if (container) {
             container.innerHTML = '<div class="empty-state"><p>Failed to load family members. Please try again.</p></div>';
         }
-        showToast('Failed to load family members', 'error');
+        const errorMsg = error.actionableMessage || error.message || 'Failed to load family members';
+        const actionStep = error.actionableStep || 'Please try again.';
+        showToast(errorMsg, 'error', actionStep);
         console.error(error);
         return [];
     }
@@ -76,10 +78,27 @@ export function showAddFamilyMemberForm() {
     
     showModal(content);
     
+    // Add validation
+    const nameInput = document.getElementById('family-name');
+    if (nameInput) {
+        nameInput.addEventListener('blur', () => validateField(nameInput));
+        nameInput.addEventListener('input', () => {
+            if (nameInput.validity.valid) {
+                showValidationMessage(nameInput, '', true);
+            }
+        });
+    }
+    
     document.getElementById('add-family-form').addEventListener('submit', async (e) => {
         e.preventDefault();
         const submitButton = e.target.querySelector('button[type="submit"]');
         const name = document.getElementById('family-name').value.trim();
+        
+        // Validate before submitting
+        if (!validateField(nameInput)) {
+            nameInput.focus();
+            return;
+        }
         
         if (!name) {
             showToast('Please enter a name', 'error');
@@ -97,8 +116,9 @@ export function showAddFamilyMemberForm() {
                 await window.loadDashboard();
             }
         } catch (error) {
-            const errorMsg = error.message || 'Failed to add family member';
-            showToast(errorMsg, 'error');
+            const errorMsg = error.actionableMessage || error.message || 'Failed to add family member';
+            const actionStep = error.actionableStep || 'Please try again.';
+            showToast(errorMsg, 'error', actionStep);
             console.error(error);
         } finally {
             setButtonLoading(submitButton, false);

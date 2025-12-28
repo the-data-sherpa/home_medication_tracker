@@ -1,6 +1,6 @@
 /** Caregiver management */
 import { caregiversAPI } from './api.js';
-import { showToast, showModal, closeModal, setButtonLoading, showDeleteConfirmation } from './app.js';
+import { showToast, showModal, closeModal, setButtonLoading, showDeleteConfirmation, validateField, showValidationMessage } from './app.js';
 
 let caregivers = [];
 
@@ -18,7 +18,9 @@ export async function loadCaregivers() {
         if (container) {
             container.innerHTML = '<div class="empty-state"><p>Failed to load caregivers. Please try again.</p></div>';
         }
-        showToast('Failed to load caregivers', 'error');
+        const errorMsg = error.actionableMessage || error.message || 'Failed to load caregivers';
+        const actionStep = error.actionableStep || 'Please try again.';
+        showToast(errorMsg, 'error', actionStep);
         console.error(error);
         return [];
     }
@@ -76,10 +78,27 @@ export function showAddCaregiverForm() {
     
     showModal(content);
     
+    // Add validation
+    const nameInput = document.getElementById('caregiver-name');
+    if (nameInput) {
+        nameInput.addEventListener('blur', () => validateField(nameInput));
+        nameInput.addEventListener('input', () => {
+            if (nameInput.validity.valid) {
+                showValidationMessage(nameInput, '', true);
+            }
+        });
+    }
+    
     document.getElementById('add-caregiver-form').addEventListener('submit', async (e) => {
         e.preventDefault();
         const submitButton = e.target.querySelector('button[type="submit"]');
         const name = document.getElementById('caregiver-name').value.trim();
+        
+        // Validate before submitting
+        if (!validateField(nameInput)) {
+            nameInput.focus();
+            return;
+        }
         
         if (!name) {
             showToast('Please enter a name', 'error');
@@ -93,8 +112,9 @@ export function showAddCaregiverForm() {
             closeModal();
             await loadCaregivers();
         } catch (error) {
-            const errorMsg = error.message || 'Failed to add caregiver';
-            showToast(errorMsg, 'error');
+            const errorMsg = error.actionableMessage || error.message || 'Failed to add caregiver';
+            const actionStep = error.actionableStep || 'Please try again.';
+            showToast(errorMsg, 'error', actionStep);
             console.error(error);
         } finally {
             setButtonLoading(submitButton, false);

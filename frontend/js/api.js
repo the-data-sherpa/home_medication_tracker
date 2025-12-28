@@ -1,7 +1,139 @@
 /** API client functions */
 const API_BASE = '/api';
 
-async function apiRequest(endpoint, options = {}) {
+// Network status tracking
+let isOnline = navigator.onLine;
+let networkStatusListeners = [];
+
+// Network status management
+export function getNetworkStatus() {
+    return isOnline;
+}
+
+export function onNetworkStatusChange(callback) {
+    networkStatusListeners.push(callback);
+    return () => {
+        networkStatusListeners = networkStatusListeners.filter(cb => cb !== callback);
+    };
+}
+
+function updateNetworkStatus(online) {
+    if (isOnline !== online) {
+        isOnline = online;
+        networkStatusListeners.forEach(cb => cb(online));
+    }
+}
+
+// Listen to browser online/offline events
+window.addEventListener('online', () => updateNetworkStatus(true));
+window.addEventListener('offline', () => updateNetworkStatus(false));
+
+// Retry configuration
+const RETRY_CONFIG = {
+    maxRetries: 3,
+    initialDelay: 1000, // 1 second
+    maxDelay: 10000, // 10 seconds
+    retryableStatuses: [408, 429, 500, 502, 503, 504], // Timeout, Too Many Requests, Server Errors
+    retryableErrors: ['NetworkError', 'Failed to fetch', 'TypeError'] // Network-related errors
+};
+
+// Exponential backoff delay calculation
+function getRetryDelay(attempt) {
+    const delay = Math.min(
+        RETRY_CONFIG.initialDelay * Math.pow(2, attempt),
+        RETRY_CONFIG.maxDelay
+    );
+    // Add jitter to prevent thundering herd
+    return delay + Math.random() * 1000;
+}
+
+// Check if error is retryable
+function isRetryableError(error, status) {
+    // Network errors are always retryable
+    if (error && (
+        error.message === 'Failed to fetch' ||
+        error.name === 'NetworkError' ||
+        error.name === 'TypeError'
+    )) {
+        return true;
+    }
+    
+    // Check if status code is retryable
+    if (status && RETRY_CONFIG.retryableStatuses.includes(status)) {
+        return true;
+    }
+    
+    return false;
+}
+
+// Enhanced error message with actionable steps
+function getActionableErrorMessage(error, status) {
+    if (!isOnline) {
+        return {
+            message: 'You are currently offline. Please check your internet connection.',
+            action: 'Check your network connection and try again when online.'
+        };
+    }
+    
+    if (error && (error.message === 'Failed to fetch' || error.name === 'NetworkError')) {
+        return {
+            message: 'Unable to connect to the server.',
+            action: 'Please check your internet connection and try again.'
+        };
+    }
+    
+    if (status === 408 || status === 504) {
+        return {
+            message: 'Request timed out.',
+            action: 'The server took too long to respond. Please try again in a moment.'
+        };
+    }
+    
+    if (status === 429) {
+        return {
+            message: 'Too many requests.',
+            action: 'Please wait a moment before trying again.'
+        };
+    }
+    
+    if (status >= 500 && status < 600) {
+        return {
+            message: 'Server error occurred.',
+            action: 'The server encountered an error. Please try again in a moment.'
+        };
+    }
+    
+    if (status === 401) {
+        return {
+            message: 'Authentication required.',
+            action: 'Please refresh the page and log in again.'
+        };
+    }
+    
+    if (status === 403) {
+        return {
+            message: 'Access denied.',
+            action: 'You do not have permission to perform this action.'
+        };
+    }
+    
+    if (status === 404) {
+        return {
+            message: 'Resource not found.',
+            action: 'The requested item may have been deleted or does not exist.'
+        };
+    }
+    
+    // Default error message
+    const errorMsg = error?.message || `HTTP error! status: ${status || 'unknown'}`;
+    return {
+        message: errorMsg,
+        action: 'Please try again. If the problem persists, refresh the page.'
+    };
+}
+
+// Retry wrapper for API requests
+async function apiRequestWithRetry(endpoint, options = {}, retryCount = 0) {
     const url = `${API_BASE}${endpoint}`;
     const config = {
         headers: {
@@ -43,14 +175,56 @@ async function apiRequest(endpoint, options = {}) {
             if (typeof data.detail === 'object') {
                 error.detail = data.detail;
             }
+            
+            // Check if we should retry
+            if (retryCount < RETRY_CONFIG.maxRetries && isRetryableError(error, response.status)) {
+                const delay = getRetryDelay(retryCount);
+                await new Promise(resolve => setTimeout(resolve, delay));
+                return apiRequestWithRetry(endpoint, options, retryCount + 1);
+            }
+            
+            // Enhance error with actionable message
+            const actionableError = getActionableErrorMessage(error, response.status);
+            error.actionableMessage = actionableError.message;
+            error.actionableStep = actionableError.action;
+            
             throw error;
         }
         
         return data;
     } catch (error) {
+        // Handle network errors
+        if (error.name === 'TypeError' || error.message === 'Failed to fetch') {
+            // Check if we should retry
+            if (retryCount < RETRY_CONFIG.maxRetries && isRetryableError(error, null)) {
+                const delay = getRetryDelay(retryCount);
+                await new Promise(resolve => setTimeout(resolve, delay));
+                return apiRequestWithRetry(endpoint, options, retryCount + 1);
+            }
+            
+            // Enhance error with actionable message
+            const actionableError = getActionableErrorMessage(error, null);
+            error.actionableMessage = actionableError.message;
+            error.actionableStep = actionableError.action;
+        }
+        
         console.error('API request failed:', error);
         throw error;
     }
+}
+
+// Main API request function (now uses retry)
+async function apiRequest(endpoint, options = {}) {
+    // Check if offline
+    if (!isOnline) {
+        const error = new Error('You are currently offline. Please check your internet connection.');
+        error.actionableMessage = 'You are currently offline.';
+        error.actionableStep = 'Please check your internet connection and try again when online.';
+        error.isOffline = true;
+        throw error;
+    }
+    
+    return apiRequestWithRetry(endpoint, options);
 }
 
 // Family Members API

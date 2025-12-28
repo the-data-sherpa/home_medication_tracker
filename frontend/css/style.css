@@ -513,6 +513,38 @@ h2 {
     resize: vertical;
 }
 
+/* Form Validation Styles */
+.form-group input:invalid:not(:focus):not(:placeholder-shown),
+.form-group select:invalid:not(:focus),
+.form-group textarea:invalid:not(:focus):not(:placeholder-shown) {
+    border-color: var(--danger-color);
+    box-shadow: 0 0 0 2px rgba(220, 53, 69, 0.1);
+}
+
+.form-group input:valid:not(:focus):not(:placeholder-shown),
+.form-group select:valid:not(:focus),
+.form-group textarea:valid:not(:focus):not(:placeholder-shown) {
+    border-color: var(--success-color);
+}
+
+.validation-message {
+    display: block;
+    font-size: 0.85rem;
+    margin-top: 0.25rem;
+    color: var(--danger-color);
+}
+
+.validation-message.success {
+    color: var(--success-color);
+}
+
+.form-group input:focus:invalid,
+.form-group select:focus:invalid,
+.form-group textarea:focus:invalid {
+    border-color: var(--danger-color);
+    outline-color: var(--danger-color);
+}
+
 .form-actions {
     display: flex;
     gap: 0.5rem;
@@ -663,6 +695,18 @@ h2 {
     border-left: 4px solid var(--primary-color);
     min-width: 250px;
     animation: slideIn 0.3s ease;
+}
+
+.toast-message {
+    margin-bottom: 0.5rem;
+}
+
+.toast-action {
+    margin-top: 0.5rem;
+    font-size: 0.85rem;
+    opacity: 0.9;
+    font-style: italic;
+    color: var(--text-secondary);
 }
 
 .toast.success {

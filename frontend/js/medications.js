@@ -1,6 +1,6 @@
 /** Medication management */
 import { medicationsAPI } from './api.js';
-import { showToast, showModal, closeModal, setButtonLoading, showDeleteConfirmation } from './app.js';
+import { showToast, showModal, closeModal, setButtonLoading, showDeleteConfirmation, validateField, showValidationMessage } from './app.js';
 
 let medications = [];
 
@@ -146,20 +146,26 @@ export function showAddMedicationForm() {
         
         try {
             const freqType = document.getElementById('med-frequency-type').value;
+            const nameValue = nameInput.value.trim();
+            const doseValue = doseInput.value.trim();
+            const freq = freqInput.value;
+            const freqMin = freqMinInput.value;
+            const freqMax = freqMaxInput.value;
+            
             const data = {
-                name: document.getElementById('med-name').value.trim(),
-                default_dose: document.getElementById('med-dose').value.trim(),
+                name: nameValue,
+                default_dose: doseValue,
                 notes: document.getElementById('med-notes').value.trim() || null
             };
             
             if (freqType === 'fixed') {
-                data.default_frequency_hours = parseFloat(document.getElementById('med-frequency').value);
+                data.default_frequency_hours = parseFloat(freq);
                 data.default_frequency_min_hours = null;
                 data.default_frequency_max_hours = null;
             } else {
                 data.default_frequency_hours = null;
-                data.default_frequency_min_hours = parseFloat(document.getElementById('med-frequency-min').value);
-                data.default_frequency_max_hours = parseFloat(document.getElementById('med-frequency-max').value);
+                data.default_frequency_min_hours = parseFloat(freqMin);
+                data.default_frequency_max_hours = parseFloat(freqMax);
             }
             
             await medicationsAPI.create(data);
@@ -167,7 +173,9 @@ export function showAddMedicationForm() {
             closeModal();
             await loadMedications();
         } catch (error) {
-            showToast('Failed to add medication', 'error');
+            const errorMsg = error.actionableMessage || error.message || 'Failed to add medication';
+            const actionStep = error.actionableStep || 'Please try again.';
+            showToast(errorMsg, 'error', actionStep);
             console.error(error);
         } finally {
             setButtonLoading(submitButton, false);

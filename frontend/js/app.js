@@ -8,6 +8,7 @@ import { showAssignMedicationForm, loadInactiveAssignments } from './assignments
 import { administrationsAPI } from './api.js';
 import { setupExportHandlers } from './export.js';
 import { stopAllTimers } from './administrations.js';
+import { getNetworkStatus, onNetworkStatusChange } from './api.js';
 
 // Make functions available globally
 window.loadDashboard = loadDashboard;
@@ -426,14 +427,24 @@ export function showModal(content) {
             overlay.setAttribute('aria-labelledby', 'modal-title');
         }
         
-        // Focus the first focusable element in the modal
+        // Auto-focus first input field in the modal (prefer input/select/textarea over buttons)
         setTimeout(() => {
-            const firstFocusable = overlay.querySelector('button:not(.modal-close), [href], input, select, textarea, [tabindex]:not([tabindex="-1"])');
-            if (firstFocusable) {
-                firstFocusable.focus();
+            // First try to find an input, select, or textarea
+            const firstInput = overlay.querySelector('input:not([type="hidden"]):not([type="checkbox"]):not([type="radio"]), select, textarea');
+            if (firstInput) {
+                firstInput.focus();
+                // If it's a text input, select the text if it has a value
+                if (firstInput.type === 'text' && firstInput.value) {
+                    firstInput.select();
+                }
             } else {
-                // If no focusable element, focus the modal itself
-                overlay.focus();
+                // Fallback to any focusable element
+                const firstFocusable = overlay.querySelector('button:not(.modal-close), [href], [tabindex]:not([tabindex="-1"])');
+                if (firstFocusable) {
+                    firstFocusable.focus();
+                } else {
+                    overlay.focus();
+                }
             }
         }, 100);
         
@@ -476,10 +487,35 @@ function trapFocus(modal) {
     const lastFocusable = focusableElements[focusableElements.length - 1];
     
     focusTrapHandler = function handleTab(e) {
+        // Escape key closes modal
         if (e.key === 'Escape') {
             e.preventDefault();
             closeModal();
             return;
+        }
+        
+        // Enter key submits form if focus is on an input/select/textarea (not already in a form submit handler)
+        if (e.key === 'Enter' && !e.shiftKey) {
+            const activeElement = document.activeElement;
+            if (activeElement && (activeElement.tagName === 'INPUT' || activeElement.tagName === 'SELECT' || activeElement.tagName === 'TEXTAREA')) {
+                // Don't submit if it's a textarea (allow Enter for new lines)
+                if (activeElement.tagName === 'TEXTAREA') {
+                    return; // Allow Enter in textarea
+                }
+                
+                // Find the form containing this element
+                const form = activeElement.closest('form');
+                if (form) {
+                    e.preventDefault();
+                    const submitButton = form.querySelector('button[type="submit"]');
+                    if (submitButton && !submitButton.disabled) {
+                        submitButton.click();
+                    } else {
+                        form.requestSubmit();
+                    }
+                    return;
+                }
+            }
         }
         
         if (e.key !== 'Tab') {
@@ -512,26 +548,65 @@ function trapFocus(modal) {
 // Make closeModal available globally for onclick handlers
 window.closeModal = closeModal;
 
-// Toast notifications
-export function showToast(message, type = 'success') {
+// Network status indicator management
+function initNetworkStatusIndicator() {
+    const statusEl = document.getElementById('network-status');
+    const iconEl = document.getElementById('network-status-icon');
+    const textEl = document.getElementById('network-status-text');
+    
+    if (!statusEl || !iconEl || !textEl) return;
+    
+    function updateNetworkIndicator(online) {
+        if (online) {
+            statusEl.classList.remove('offline');
+            textEl.textContent = 'Online';
+            statusEl.setAttribute('aria-label', 'Network status: Online');
+        } else {
+            statusEl.classList.add('offline');
+            textEl.textContent = 'Offline';
+            statusEl.setAttribute('aria-label', 'Network status: Offline');
+        }
+    }
+    
+    // Initialize with current status
+    updateNetworkIndicator(getNetworkStatus());
+    
+    // Listen for network status changes
+    onNetworkStatusChange(updateNetworkIndicator);
+}
+
+// Toast notifications with enhanced error messages
+export function showToast(message, type = 'success', actionableStep = null) {
     const container = document.getElementById('toast-container');
     if (!container) return;
     
     const toast = document.createElement('div');
     toast.className = `toast ${type}`;
-    toast.textContent = message;
     toast.setAttribute('role', 'alert');
     toast.setAttribute('aria-live', type === 'error' ? 'assertive' : 'polite');
+    toast.setAttribute('aria-atomic', 'true');
+    
+    let content = `<div class="toast-message">${escapeHtml(message)}</div>`;
+    
+    // Add actionable step for errors
+    if (type === 'error' && actionableStep) {
+        content += `<div class="toast-action">${escapeHtml(actionableStep)}</div>`;
+    }
+    
+    toast.innerHTML = content;
     
     container.appendChild(toast);
     
     // Announce to screen reader
-    announceToScreenReader(message);
+    const fullMessage = actionableStep ? `${message}. ${actionableStep}` : message;
+    announceToScreenReader(fullMessage);
     
+    // Auto-remove after delay (longer for errors with actionable steps)
+    const delay = (type === 'error' && actionableStep) ? 8000 : (type === 'error' ? 6000 : 4000);
     setTimeout(() => {
         toast.style.animation = 'slideIn 0.3s ease reverse';
         setTimeout(() => toast.remove(), 300);
-    }, 3000);
+    }, delay);
 }
 
 // Loading overlay functions
@@ -575,6 +650,61 @@ export function setButtonLoading(button, isLoading) {
     } else {
         button.disabled = false;
         button.classList.remove('btn-loading');
+    }
+}
+
+// Helper function to show inline validation message
+export function showValidationMessage(input, message, isValid = false) {
+    // Remove existing validation message
+    const existing = input.parentElement.querySelector('.validation-message');
+    if (existing) {
+        existing.remove();
+    }
+    
+    if (message) {
+        const messageEl = document.createElement('span');
+        messageEl.className = `validation-message ${isValid ? 'success' : ''}`;
+        messageEl.textContent = message;
+        input.parentElement.appendChild(messageEl);
+        
+        // Update input styling
+        if (isValid) {
+            input.classList.remove('invalid');
+            input.classList.add('valid');
+        } else {
+            input.classList.add('invalid');
+            input.classList.remove('valid');
+        }
+    } else {
+        input.classList.remove('invalid', 'valid');
+    }
+}
+
+// Helper function to validate form field
+export function validateField(input) {
+    if (!input) return true;
+    
+    // Check HTML5 validation
+    if (!input.checkValidity()) {
+        let message = '';
+        if (input.validity.valueMissing) {
+            message = 'This field is required';
+        } else if (input.validity.typeMismatch) {
+            message = 'Please enter a valid value';
+        } else if (input.validity.rangeUnderflow) {
+            message = `Value must be at least ${input.min}`;
+        } else if (input.validity.rangeOverflow) {
+            message = `Value must be at most ${input.max}`;
+        } else if (input.validity.stepMismatch) {
+            message = `Value must be a multiple of ${input.step}`;
+        } else {
+            message = 'Please enter a valid value';
+        }
+        showValidationMessage(input, message, false);
+        return false;
+    } else {
+        showValidationMessage(input, '', true);
+        return true;
     }
 }
 
@@ -697,6 +827,7 @@ function updateThemeToggle(theme) {
 // Initialize app
 document.addEventListener('DOMContentLoaded', () => {
     initTheme();
+    initNetworkStatusIndicator();
     setupNavigation();
     setupExportHandlers();
     setupHamburgerMenu();

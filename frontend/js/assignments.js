@@ -2,7 +2,7 @@
 import { assignmentsAPI } from './api.js';
 import { medicationsAPI } from './api.js';
 import { familyMembersAPI } from './api.js';
-import { showToast, showModal, closeModal, setButtonLoading } from './app.js';
+import { showToast, showModal, closeModal, setButtonLoading, validateField, showValidationMessage } from './app.js';
 
 export async function showAssignMedicationForm() {
     try {
@@ -111,6 +111,10 @@ export async function showAssignMedicationForm() {
         medSelect.addEventListener('change', (e) => {
             const option = e.target.selectedOptions[0];
             if (option && option.dataset.dose) {
+                // Pre-fill dose if field is empty
+                if (!doseInput.value.trim()) {
+                    doseInput.value = option.dataset.dose;
+                }
                 doseInput.placeholder = `Default: ${option.dataset.dose}`;
                 const freqType = option.dataset.frequencyType;
                 if (freqType === 'range') {
@@ -275,8 +279,9 @@ export async function showAssignMedicationForm() {
                         }
                     }
                 } else {
-                    const errorMsg = error.message || 'Failed to assign medication';
-                    showToast(errorMsg, 'error');
+                    const errorMsg = error.actionableMessage || error.message || 'Failed to assign medication';
+                    const actionStep = error.actionableStep || 'Please try again.';
+                    showToast(errorMsg, 'error', actionStep);
                     console.error(error);
                 }
             } finally {

@@ -1,6 +1,6 @@
 /** Medication inventory management */
 import { inventoryAPI, medicationsAPI } from './api.js';
-import { showToast, showModal, closeModal, setButtonLoading } from './app.js';
+import { showToast, showModal, closeModal, setButtonLoading, validateField, showValidationMessage } from './app.js';
 
 let inventory = [];
 let medications = [];
@@ -156,8 +156,9 @@ export function showAddInventoryForm() {
             closeModal();
             await loadInventory();
         } catch (error) {
-            const errorMsg = error.message || 'Failed to add inventory';
-            showToast(errorMsg, 'error');
+            const errorMsg = error.actionableMessage || error.message || 'Failed to add inventory';
+            const actionStep = error.actionableStep || 'Please try again.';
+            showToast(errorMsg, 'error', actionStep);
             console.error(error);
         } finally {
             setButtonLoading(submitButton, false);
