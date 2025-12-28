@@ -1,15 +1,23 @@
 /** Caregiver management */
 import { caregiversAPI } from './api.js';
-import { showToast, showModal, closeModal } from './app.js';
+import { showToast, showModal, closeModal, setButtonLoading } from './app.js';
 
 let caregivers = [];
 
 export async function loadCaregivers() {
+    const container = document.getElementById('caregivers-list');
+    if (container) {
+        container.innerHTML = '<div class="loading"><div class="spinner"></div><p>Loading caregivers...</p></div>';
+    }
+    
     try {
         caregivers = await caregiversAPI.getAll();
         renderCaregivers();
         return caregivers;
     } catch (error) {
+        if (container) {
+            container.innerHTML = '<div class="empty-state"><p>Failed to load caregivers. Please try again.</p></div>';
+        }
         showToast('Failed to load caregivers', 'error');
         console.error(error);
         return [];
@@ -56,6 +64,7 @@ export function showAddCaregiverForm() {
     
     document.getElementById('add-caregiver-form').addEventListener('submit', async (e) => {
         e.preventDefault();
+        const submitButton = e.target.querySelector('button[type="submit"]');
         const name = document.getElementById('caregiver-name').value.trim();
         
         if (!name) {
@@ -63,6 +72,7 @@ export function showAddCaregiverForm() {
             return;
         }
         
+        setButtonLoading(submitButton, true);
         try {
             await caregiversAPI.create({ name });
             showToast('Caregiver added successfully', 'success');
@@ -72,6 +82,8 @@ export function showAddCaregiverForm() {
             const errorMsg = error.message || 'Failed to add caregiver';
             showToast(errorMsg, 'error');
             console.error(error);
+        } finally {
+            setButtonLoading(submitButton, false);
         }
     });
 }

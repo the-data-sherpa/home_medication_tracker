@@ -107,6 +107,8 @@ async function loadHistory() {
     const container = document.getElementById('history-list');
     if (!container) return;
 
+    container.innerHTML = '<div class="loading"><div class="spinner"></div><p>Loading history...</p></div>';
+
     try {
         const params = {};
         
@@ -192,7 +194,7 @@ async function loadHistory() {
         `).join('');
         
     } catch (error) {
-        container.innerHTML = '<div class="empty-state"><p>Failed to load history.</p></div>';
+        container.innerHTML = '<div class="empty-state"><p>Failed to load history. Please try again.</p></div>';
         console.error(error);
     }
 }
@@ -279,40 +281,44 @@ async function showEditAdministrationForm(admin) {
     
     document.getElementById('edit-administration-form').addEventListener('submit', async (e) => {
         e.preventDefault();
-        
-        const { administrationsAPI } = await import('./api.js');
-        
-        const dateTimeInput = document.getElementById('edit-admin-time').value;
-        const doseGiven = document.getElementById('edit-admin-dose').value.trim();
-        const caregiverId = document.getElementById('edit-admin-caregiver').value;
-        const notes = document.getElementById('edit-admin-notes').value.trim() || null;
-        
-        // Convert datetime-local (which is in local time) to UTC ISO string
-        // datetime-local input gives us a string like "2024-01-15T14:30" in local time
-        // We need to create a Date object treating it as local time, then convert to UTC
-        const localDate = new Date(dateTimeInput);
-        // Validate the date was parsed correctly
-        if (isNaN(localDate.getTime())) {
-            showToast('Invalid date/time format', 'error');
-            return;
-        }
-        // Convert to UTC ISO string - toISOString() automatically converts to UTC
-        const isoDateTime = localDate.toISOString();
-        
-        // Validate not in future (using local time for user-friendly check)
-        if (localDate > new Date()) {
-            showToast('Administration time cannot be in the future', 'error');
-            return;
-        }
-        
-        const data = {
-            administered_at: isoDateTime,
-            dose_given: doseGiven,
-            caregiver_id: caregiverId ? parseInt(caregiverId) : null,
-            notes: notes
-        };
+        const submitButton = e.target.querySelector('button[type="submit"]');
+        setButtonLoading(submitButton, true);
         
         try {
+            const { administrationsAPI } = await import('./api.js');
+            
+            const dateTimeInput = document.getElementById('edit-admin-time').value;
+            const doseGiven = document.getElementById('edit-admin-dose').value.trim();
+            const caregiverId = document.getElementById('edit-admin-caregiver').value;
+            const notes = document.getElementById('edit-admin-notes').value.trim() || null;
+            
+            // Convert datetime-local (which is in local time) to UTC ISO string
+            // datetime-local input gives us a string like "2024-01-15T14:30" in local time
+            // We need to create a Date object treating it as local time, then convert to UTC
+            const localDate = new Date(dateTimeInput);
+            // Validate the date was parsed correctly
+            if (isNaN(localDate.getTime())) {
+                showToast('Invalid date/time format', 'error');
+                setButtonLoading(submitButton, false);
+                return;
+            }
+            // Convert to UTC ISO string - toISOString() automatically converts to UTC
+            const isoDateTime = localDate.toISOString();
+            
+            // Validate not in future (using local time for user-friendly check)
+            if (localDate > new Date()) {
+                showToast('Administration time cannot be in the future', 'error');
+                setButtonLoading(submitButton, false);
+                return;
+            }
+            
+            const data = {
+                administered_at: isoDateTime,
+                dose_given: doseGiven,
+                caregiver_id: caregiverId ? parseInt(caregiverId) : null,
+                notes: notes
+            };
+            
             await administrationsAPI.update(admin.id, data);
             showToast('Administration updated successfully', 'success');
             closeModal();
@@ -324,6 +330,8 @@ async function showEditAdministrationForm(admin) {
             const errorMsg = error.message || 'Failed to update administration';
             showToast(errorMsg, 'error');
             console.error(error);
+        } finally {
+            setButtonLoading(submitButton, false);
         }
     });
 }
@@ -385,6 +393,50 @@ export function showToast(message, type = 'success') {
         toast.style.animation = 'slideIn 0.3s ease reverse';
         setTimeout(() => toast.remove(), 300);
     }, 3000);
+}
+
+// Loading overlay functions
+let loadingOverlay = null;
+
+export function showLoadingOverlay(message = 'Loading...') {
+    if (loadingOverlay) {
+        hideLoadingOverlay();
+    }
+    
+    loadingOverlay = document.createElement('div');
+    loadingOverlay.className = 'loading-overlay';
+    loadingOverlay.id = 'loading-overlay';
+    loadingOverlay.innerHTML = `
+        <div class="spinner"></div>
+        <p>${escapeHtml(message)}</p>
+    `;
+    
+    document.body.appendChild(loadingOverlay);
+}
+
+export function hideLoadingOverlay() {
+    if (loadingOverlay) {
+        loadingOverlay.remove();
+        loadingOverlay = null;
+    } else {
+        const existing = document.getElementById('loading-overlay');
+        if (existing) {
+            existing.remove();
+        }
+    }
+}
+
+// Helper function to set button loading state
+export function setButtonLoading(button, isLoading) {
+    if (!button) return;
+    
+    if (isLoading) {
+        button.disabled = true;
+        button.classList.add('btn-loading');
+    } else {
+        button.disabled = false;
+        button.classList.remove('btn-loading');
+    }
 }
 
 function escapeHtml(text) {

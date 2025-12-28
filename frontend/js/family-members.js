@@ -1,15 +1,23 @@
 /** Family member management */
 import { familyMembersAPI } from './api.js';
-import { showToast, showModal, closeModal } from './app.js';
+import { showToast, showModal, closeModal, setButtonLoading } from './app.js';
 
 let familyMembers = [];
 
 export async function loadFamilyMembers() {
+    const container = document.getElementById('family-list');
+    if (container) {
+        container.innerHTML = '<div class="loading"><div class="spinner"></div><p>Loading family members...</p></div>';
+    }
+    
     try {
         familyMembers = await familyMembersAPI.getAll();
         renderFamilyMembers();
         return familyMembers;
     } catch (error) {
+        if (container) {
+            container.innerHTML = '<div class="empty-state"><p>Failed to load family members. Please try again.</p></div>';
+        }
         showToast('Failed to load family members', 'error');
         console.error(error);
         return [];
@@ -56,6 +64,7 @@ export function showAddFamilyMemberForm() {
     
     document.getElementById('add-family-form').addEventListener('submit', async (e) => {
         e.preventDefault();
+        const submitButton = e.target.querySelector('button[type="submit"]');
         const name = document.getElementById('family-name').value.trim();
         
         if (!name) {
@@ -63,6 +72,7 @@ export function showAddFamilyMemberForm() {
             return;
         }
         
+        setButtonLoading(submitButton, true);
         try {
             await familyMembersAPI.create({ name });
             showToast('Family member added successfully', 'success');
@@ -76,6 +86,8 @@ export function showAddFamilyMemberForm() {
             const errorMsg = error.message || 'Failed to add family member';
             showToast(errorMsg, 'error');
             console.error(error);
+        } finally {
+            setButtonLoading(submitButton, false);
         }
     });
 }

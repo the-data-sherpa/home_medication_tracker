@@ -6,11 +6,19 @@ import { showToast } from './app.js';
 let assignments = [];
 
 export async function loadDashboard() {
+    const container = document.getElementById('assignments-list');
+    if (container) {
+        container.innerHTML = '<div class="loading"><div class="spinner"></div><p>Loading dashboard...</p></div>';
+    }
+    
     try {
         assignments = await assignmentsAPI.getAll({ active: true });
         renderDashboard();
         return assignments;
     } catch (error) {
+        if (container) {
+            container.innerHTML = '<div class="empty-state"><p>Failed to load dashboard. Please try again.</p></div>';
+        }
         showToast('Failed to load dashboard', 'error');
         console.error(error);
         return [];

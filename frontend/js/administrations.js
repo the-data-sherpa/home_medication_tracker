@@ -1,6 +1,6 @@
 /** Medication administration tracking */
 import { administrationsAPI, assignmentsAPI } from './api.js';
-import { showToast, showModal, closeModal } from './app.js';
+import { showToast, showModal, closeModal, setButtonLoading } from './app.js';
 
 let statusTimers = {};
 
@@ -116,16 +116,23 @@ export async function showGiveMedicationForm(assignment) {
     
     document.getElementById('give-medication-form').addEventListener('submit', async (e) => {
         e.preventDefault();
-        const doseGiven = document.getElementById('admin-dose').value.trim();
-        const notes = document.getElementById('admin-notes').value.trim() || null;
-        const caregiverId = document.getElementById('admin-caregiver').value ? parseInt(document.getElementById('admin-caregiver').value) : null;
+        const submitButton = e.target.querySelector('button[type="submit"]');
+        setButtonLoading(submitButton, true);
         
-        const success = await recordAdministration(assignment.id, doseGiven, notes, caregiverId);
-        if (success) {
-            closeModal();
-            if (window.loadDashboard) {
-                await window.loadDashboard();
+        try {
+            const doseGiven = document.getElementById('admin-dose').value.trim();
+            const notes = document.getElementById('admin-notes').value.trim() || null;
+            const caregiverId = document.getElementById('admin-caregiver').value ? parseInt(document.getElementById('admin-caregiver').value) : null;
+            
+            const success = await recordAdministration(assignment.id, doseGiven, notes, caregiverId);
+            if (success) {
+                closeModal();
+                if (window.loadDashboard) {
+                    await window.loadDashboard();
+                }
             }
+        } finally {
+            setButtonLoading(submitButton, false);
         }
     });
 }

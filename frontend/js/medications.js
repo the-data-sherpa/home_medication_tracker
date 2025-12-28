@@ -1,15 +1,23 @@
 /** Medication management */
 import { medicationsAPI } from './api.js';
-import { showToast, showModal, closeModal } from './app.js';
+import { showToast, showModal, closeModal, setButtonLoading } from './app.js';
 
 let medications = [];
 
 export async function loadMedications() {
+    const container = document.getElementById('medications-list');
+    if (container) {
+        container.innerHTML = '<div class="loading"><div class="spinner"></div><p>Loading medications...</p></div>';
+    }
+    
     try {
         medications = await medicationsAPI.getAll();
         renderMedications();
         return medications;
     } catch (error) {
+        if (container) {
+            container.innerHTML = '<div class="empty-state"><p>Failed to load medications. Please try again.</p></div>';
+        }
         showToast('Failed to load medications', 'error');
         console.error(error);
         return [];
@@ -119,24 +127,27 @@ export function showAddMedicationForm() {
     
     document.getElementById('add-medication-form').addEventListener('submit', async (e) => {
         e.preventDefault();
-        const freqType = document.getElementById('med-frequency-type').value;
-        const data = {
-            name: document.getElementById('med-name').value.trim(),
-            default_dose: document.getElementById('med-dose').value.trim(),
-            notes: document.getElementById('med-notes').value.trim() || null
-        };
-        
-        if (freqType === 'fixed') {
-            data.default_frequency_hours = parseFloat(document.getElementById('med-frequency').value);
-            data.default_frequency_min_hours = null;
-            data.default_frequency_max_hours = null;
-        } else {
-            data.default_frequency_hours = null;
-            data.default_frequency_min_hours = parseFloat(document.getElementById('med-frequency-min').value);
-            data.default_frequency_max_hours = parseFloat(document.getElementById('med-frequency-max').value);
-        }
+        const submitButton = e.target.querySelector('button[type="submit"]');
+        setButtonLoading(submitButton, true);
         
         try {
+            const freqType = document.getElementById('med-frequency-type').value;
+            const data = {
+                name: document.getElementById('med-name').value.trim(),
+                default_dose: document.getElementById('med-dose').value.trim(),
+                notes: document.getElementById('med-notes').value.trim() || null
+            };
+            
+            if (freqType === 'fixed') {
+                data.default_frequency_hours = parseFloat(document.getElementById('med-frequency').value);
+                data.default_frequency_min_hours = null;
+                data.default_frequency_max_hours = null;
+            } else {
+                data.default_frequency_hours = null;
+                data.default_frequency_min_hours = parseFloat(document.getElementById('med-frequency-min').value);
+                data.default_frequency_max_hours = parseFloat(document.getElementById('med-frequency-max').value);
+            }
+            
             await medicationsAPI.create(data);
             showToast('Medication added successfully', 'success');
             closeModal();
@@ -144,6 +155,8 @@ export function showAddMedicationForm() {
         } catch (error) {
             showToast('Failed to add medication', 'error');
             console.error(error);
+        } finally {
+            setButtonLoading(submitButton, false);
         }
     });
 }
@@ -219,39 +232,45 @@ window.editMedication = async function(id) {
     
     document.getElementById('edit-medication-form').addEventListener('submit', async (e) => {
         e.preventDefault();
-        const freqType = document.getElementById('edit-med-frequency-type').value;
-        const data = {
-            name: document.getElementById('edit-med-name').value.trim(),
-            default_dose: document.getElementById('edit-med-dose').value.trim(),
-            notes: document.getElementById('edit-med-notes').value.trim() || null
-        };
-        
-        if (freqType === 'fixed') {
-            const freq = parseFloat(document.getElementById('edit-med-frequency').value);
-            if (!freq || freq <= 0) {
-                showToast('Frequency must be greater than 0', 'error');
-                return;
-            }
-            data.default_frequency_hours = freq;
-            data.default_frequency_min_hours = null;
-            data.default_frequency_max_hours = null;
-        } else {
-            const minFreq = parseFloat(document.getElementById('edit-med-frequency-min').value);
-            const maxFreq = parseFloat(document.getElementById('edit-med-frequency-max').value);
-            if (!minFreq || !maxFreq || minFreq <= 0 || maxFreq <= 0) {
-                showToast('Frequencies must be greater than 0', 'error');
-                return;
-            }
-            if (minFreq >= maxFreq) {
-                showToast('Minimum frequency must be less than maximum', 'error');
-                return;
-            }
-            data.default_frequency_hours = null;
-            data.default_frequency_min_hours = minFreq;
-            data.default_frequency_max_hours = maxFreq;
-        }
+        const submitButton = e.target.querySelector('button[type="submit"]');
+        setButtonLoading(submitButton, true);
         
         try {
+            const freqType = document.getElementById('edit-med-frequency-type').value;
+            const data = {
+                name: document.getElementById('edit-med-name').value.trim(),
+                default_dose: document.getElementById('edit-med-dose').value.trim(),
+                notes: document.getElementById('edit-med-notes').value.trim() || null
+            };
+            
+            if (freqType === 'fixed') {
+                const freq = parseFloat(document.getElementById('edit-med-frequency').value);
+                if (!freq || freq <= 0) {
+                    showToast('Frequency must be greater than 0', 'error');
+                    setButtonLoading(submitButton, false);
+                    return;
+                }
+                data.default_frequency_hours = freq;
+                data.default_frequency_min_hours = null;
+                data.default_frequency_max_hours = null;
+            } else {
+                const minFreq = parseFloat(document.getElementById('edit-med-frequency-min').value);
+                const maxFreq = parseFloat(document.getElementById('edit-med-frequency-max').value);
+                if (!minFreq || !maxFreq || minFreq <= 0 || maxFreq <= 0) {
+                    showToast('Frequencies must be greater than 0', 'error');
+                    setButtonLoading(submitButton, false);
+                    return;
+                }
+                if (minFreq >= maxFreq) {
+                    showToast('Minimum frequency must be less than maximum', 'error');
+                    setButtonLoading(submitButton, false);
+                    return;
+                }
+                data.default_frequency_hours = null;
+                data.default_frequency_min_hours = minFreq;
+                data.default_frequency_max_hours = maxFreq;
+            }
+            
             await medicationsAPI.update(id, data);
             showToast('Medication updated successfully', 'success');
             closeModal();
@@ -260,6 +279,8 @@ window.editMedication = async function(id) {
             const errorMsg = error.message || 'Failed to update medication';
             showToast(errorMsg, 'error');
             console.error(error);
+        } finally {
+            setButtonLoading(submitButton, false);
         }
     });
 };
