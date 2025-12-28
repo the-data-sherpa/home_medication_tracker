@@ -90,13 +90,12 @@ function switchView(viewName) {
         case 'family':
             loadFamilyMembers();
             break;
-        case 'caregivers':
-            loadCaregivers();
-            break;
         case 'history':
             loadHistory();
             break;
-        case 'inventory':
+        case 'settings':
+            // Load both caregivers and inventory when settings view is opened
+            loadCaregivers();
             loadInventory();
             break;
     }

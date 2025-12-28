@@ -500,6 +500,27 @@ h2 {
     min-height: 44px;
 }
 
+/* Settings Sections */
+.settings-section {
+    margin-bottom: 2rem;
+    padding: 1.5rem;
+    background: var(--card-bg);
+    border-radius: 8px;
+    box-shadow: var(--shadow);
+    border: 1px solid var(--border-color);
+}
+
+.settings-section h3 {
+    margin-top: 0;
+    margin-bottom: 0.75rem;
+    font-size: 1.2rem;
+    color: var(--text-color);
+}
+
+.settings-section p {
+    margin-bottom: 1rem;
+}
+
 /* Alerts */
 .alerts {
     margin-bottom: 1rem;
