@@ -508,7 +508,7 @@ export async function showDeleteConfirmation(itemType, itemName, canDeleteCheck,
         }
         
         // No dependencies, show standard confirmation
-        const confirmMessage = `Are you sure you want to delete ${itemType} "${escapeHtml(itemName)}"?`;
+        const confirmMessage = `Are you sure you want to delete ${itemType} "${itemName}"?`;
         if (confirm(confirmMessage)) {
             // Execute onConfirm without catching errors here - let the callback handle them
             // The callback will show appropriate error messages and handle the error
