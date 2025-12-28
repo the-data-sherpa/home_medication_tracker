@@ -204,6 +204,7 @@ class AdministrationCreate(BaseModel):
     caregiver_id: Optional[int] = None
     dose_given: str
     notes: Optional[str] = None
+    administered_at: Optional[datetime] = None  # Optional custom time for backdating
 
 
 class AdministrationUpdate(BaseModel):

@@ -4,14 +4,21 @@ import { showToast, showModal, closeModal, setButtonLoading } from './app.js';
 
 let statusTimers = {};
 
-export async function recordAdministration(assignmentId, dose, notes = null, caregiverId = null) {
+export async function recordAdministration(assignmentId, dose, notes = null, caregiverId = null, administeredAt = null) {
     try {
-        await administrationsAPI.create({
+        const data = {
             medication_assignment_id: assignmentId,
             caregiver_id: caregiverId,
             dose_given: dose,
             notes: notes
-        });
+        };
+        
+        // Add custom time if provided
+        if (administeredAt) {
+            data.administered_at = administeredAt;
+        }
+        
+        await administrationsAPI.create(data);
         showToast('Medication administration recorded', 'success');
         return true;
     } catch (error) {
@@ -82,6 +89,15 @@ export async function showGiveMedicationForm(assignment) {
         console.error('Failed to load caregivers', error);
     }
     
+    // Set default time to now (for datetime-local input format: YYYY-MM-DDTHH:mm)
+    const now = new Date();
+    const year = now.getFullYear();
+    const month = String(now.getMonth() + 1).padStart(2, '0');
+    const day = String(now.getDate()).padStart(2, '0');
+    const hours = String(now.getHours()).padStart(2, '0');
+    const minutes = String(now.getMinutes()).padStart(2, '0');
+    const defaultDateTime = `${year}-${month}-${day}T${hours}:${minutes}`;
+    
     const content = `
         <h3>Give Medication</h3>
         <div class="medication-info">
@@ -90,6 +106,19 @@ export async function showGiveMedicationForm(assignment) {
             <p>Dose: ${escapeHtml(dose)}</p>
         </div>
         <form id="give-medication-form">
+            <div class="form-group">
+                <label for="admin-time">Administration Time</label>
+                <input type="datetime-local" id="admin-time" value="${defaultDateTime}" required>
+                <small style="display: block; margin-top: 0.25rem; color: #666;">
+                    You can backdate up to 24 hours if you forgot to log earlier
+                </small>
+                <div style="margin-top: 0.5rem; display: flex; gap: 0.5rem; flex-wrap: wrap;">
+                    <button type="button" class="btn btn-secondary btn-small" onclick="setAdminTime(-5)">5 min ago</button>
+                    <button type="button" class="btn btn-secondary btn-small" onclick="setAdminTime(-10)">10 min ago</button>
+                    <button type="button" class="btn btn-secondary btn-small" onclick="setAdminTime(-15)">15 min ago</button>
+                    <button type="button" class="btn btn-secondary btn-small" onclick="setAdminTime(0)">Now</button>
+                </div>
+            </div>
             <div class="form-group">
                 <label for="admin-caregiver">Given By (optional)</label>
                 <select id="admin-caregiver">
@@ -114,23 +143,75 @@ export async function showGiveMedicationForm(assignment) {
     
     showModal(content);
     
+    // Set up quick time buttons
+    window.setAdminTime = function(minutesOffset) {
+        const timeInput = document.getElementById('admin-time');
+        if (!timeInput) return;
+        
+        const now = new Date();
+        const targetTime = new Date(now.getTime() + minutesOffset * 60000);
+        
+        const year = targetTime.getFullYear();
+        const month = String(targetTime.getMonth() + 1).padStart(2, '0');
+        const day = String(targetTime.getDate()).padStart(2, '0');
+        const hours = String(targetTime.getHours()).padStart(2, '0');
+        const minutes = String(targetTime.getMinutes()).padStart(2, '0');
+        const dateTimeValue = `${year}-${month}-${day}T${hours}:${minutes}`;
+        
+        timeInput.value = dateTimeValue;
+    };
+    
     document.getElementById('give-medication-form').addEventListener('submit', async (e) => {
         e.preventDefault();
         const submitButton = e.target.querySelector('button[type="submit"]');
         setButtonLoading(submitButton, true);
         
         try {
+            const dateTimeInput = document.getElementById('admin-time').value;
             const doseGiven = document.getElementById('admin-dose').value.trim();
             const notes = document.getElementById('admin-notes').value.trim() || null;
             const caregiverId = document.getElementById('admin-caregiver').value ? parseInt(document.getElementById('admin-caregiver').value) : null;
             
-            const success = await recordAdministration(assignment.id, doseGiven, notes, caregiverId);
+            // Convert datetime-local (which is in local time) to UTC ISO string
+            const localDate = new Date(dateTimeInput);
+            
+            // Validate the date was parsed correctly
+            if (isNaN(localDate.getTime())) {
+                showToast('Invalid date/time format', 'error');
+                setButtonLoading(submitButton, false);
+                return;
+            }
+            
+            // Validate not in future
+            if (localDate > new Date()) {
+                showToast('Administration time cannot be in the future', 'error');
+                setButtonLoading(submitButton, false);
+                return;
+            }
+            
+            // Validate not more than 24 hours in the past
+            const now = new Date();
+            const maxBackdate = 24 * 60 * 60 * 1000; // 24 hours in milliseconds
+            if (localDate < (now - maxBackdate)) {
+                showToast('Administration time cannot be more than 24 hours in the past', 'error');
+                setButtonLoading(submitButton, false);
+                return;
+            }
+            
+            // Convert to UTC ISO string - toISOString() automatically converts to UTC
+            const isoDateTime = localDate.toISOString();
+            
+            const success = await recordAdministration(assignment.id, doseGiven, notes, caregiverId, isoDateTime);
             if (success) {
                 closeModal();
                 if (window.loadDashboard) {
                     await window.loadDashboard();
                 }
             }
+        } catch (error) {
+            const errorMsg = error.message || 'Failed to record administration';
+            showToast(errorMsg, 'error');
+            console.error(error);
         } finally {
             setButtonLoading(submitButton, false);
         }
