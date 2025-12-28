@@ -1,6 +1,6 @@
 /** Export and import functionality */
 import { exportAPI } from './api.js';
-import { showToast } from './app.js';
+import { showToast, showLoadingOverlay, hideLoadingOverlay, setButtonLoading } from './app.js';
 import { loadDashboard } from './dashboard.js';
 import { loadFamilyMembers } from './family-members.js';
 import { loadCaregivers } from './caregivers.js';
@@ -15,24 +15,34 @@ export function setupExportHandlers() {
 
     if (exportJsonBtn) {
         exportJsonBtn.addEventListener('click', async () => {
+            setButtonLoading(exportJsonBtn, true);
+            showLoadingOverlay('Exporting data...');
             try {
                 await exportAPI.exportJSON();
                 showToast('Data exported successfully', 'success');
             } catch (error) {
                 showToast('Failed to export data', 'error');
                 console.error(error);
+            } finally {
+                setButtonLoading(exportJsonBtn, false);
+                hideLoadingOverlay();
             }
         });
     }
 
     if (exportCsvBtn) {
         exportCsvBtn.addEventListener('click', async () => {
+            setButtonLoading(exportCsvBtn, true);
+            showLoadingOverlay('Exporting data...');
             try {
                 await exportAPI.exportCSV();
                 showToast('Data exported successfully', 'success');
             } catch (error) {
                 showToast('Failed to export data', 'error');
                 console.error(error);
+            } finally {
+                setButtonLoading(exportCsvBtn, false);
+                hideLoadingOverlay();
             }
         });
     }
@@ -51,12 +61,15 @@ export function setupExportHandlers() {
                 return;
             }
 
+            setButtonLoading(importBtn, true);
+            showLoadingOverlay('Importing data...');
             try {
                 const result = await exportAPI.importJSON(file);
                 showToast(`Import completed: ${JSON.stringify(result.imported)}`, 'success');
                 importFile.value = '';
                 
                 // Reload all data
+                showLoadingOverlay('Reloading data...');
                 await Promise.all([
                     loadDashboard(),
                     loadFamilyMembers(),
@@ -68,6 +81,9 @@ export function setupExportHandlers() {
                 showToast(`Import failed: ${error.message}`, 'error');
                 console.error(error);
                 importFile.value = '';
+            } finally {
+                setButtonLoading(importBtn, false);
+                hideLoadingOverlay();
             }
         });
     }

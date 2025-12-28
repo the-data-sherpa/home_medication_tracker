@@ -2,7 +2,7 @@
 import { assignmentsAPI } from './api.js';
 import { medicationsAPI } from './api.js';
 import { familyMembersAPI } from './api.js';
-import { showToast, showModal, closeModal } from './app.js';
+import { showToast, showModal, closeModal, setButtonLoading } from './app.js';
 
 export async function showAssignMedicationForm() {
     try {
@@ -162,67 +162,73 @@ export async function showAssignMedicationForm() {
         
         document.getElementById('assign-medication-form').addEventListener('submit', async (e) => {
             e.preventDefault();
-            const familyId = parseInt(document.getElementById('assign-family').value);
-            const medicationId = parseInt(document.getElementById('assign-medication').value);
-            const dose = document.getElementById('assign-dose').value.trim() || null;
-            const freqTypeOverride = document.getElementById('assign-frequency-type').value;
-            const scheduleType = document.getElementById('assign-schedule-type').value || null;
-            const scheduleTime = document.getElementById('assign-schedule-time').value || null;
-            
-            let scheduleDays = null;
-            if (scheduleType === 'weekly') {
-                const checked = Array.from(document.querySelectorAll('.schedule-day-checkbox:checked')).map(cb => cb.value);
-                scheduleDays = checked.length > 0 ? checked.join(',') : null;
-            }
-            
-            const data = {
-                family_member_id: familyId,
-                medication_id: medicationId,
-                current_dose: dose,
-                schedule_type: scheduleType,
-                schedule_time: scheduleTime,
-                schedule_days: scheduleDays
-            };
-            
-            // Handle frequency override
-            if (freqTypeOverride === 'fixed') {
-                const freq = document.getElementById('assign-frequency').value;
-                if (freq) {
-                    const freqValue = parseFloat(freq);
-                    if (freqValue <= 0) {
-                        showToast('Frequency must be greater than 0', 'error');
-                        return;
-                    }
-                    data.frequency_hours = freqValue;
-                }
-                data.frequency_min_hours = null;
-                data.frequency_max_hours = null;
-            } else if (freqTypeOverride === 'range') {
-                const minFreq = document.getElementById('assign-frequency-min').value;
-                const maxFreq = document.getElementById('assign-frequency-max').value;
-                if (minFreq && maxFreq) {
-                    const minValue = parseFloat(minFreq);
-                    const maxValue = parseFloat(maxFreq);
-                    if (minValue <= 0 || maxValue <= 0) {
-                        showToast('Frequencies must be greater than 0', 'error');
-                        return;
-                    }
-                    if (minValue >= maxValue) {
-                        showToast('Minimum frequency must be less than maximum', 'error');
-                        return;
-                    }
-                    data.frequency_min_hours = minValue;
-                    data.frequency_max_hours = maxValue;
-                }
-                data.frequency_hours = null;
-            } else {
-                // Use medication default - don't set frequency fields
-                data.frequency_hours = null;
-                data.frequency_min_hours = null;
-                data.frequency_max_hours = null;
-            }
+            const submitButton = e.target.querySelector('button[type="submit"]');
+            setButtonLoading(submitButton, true);
             
             try {
+                const familyId = parseInt(document.getElementById('assign-family').value);
+                const medicationId = parseInt(document.getElementById('assign-medication').value);
+                const dose = document.getElementById('assign-dose').value.trim() || null;
+                const freqTypeOverride = document.getElementById('assign-frequency-type').value;
+                const scheduleType = document.getElementById('assign-schedule-type').value || null;
+                const scheduleTime = document.getElementById('assign-schedule-time').value || null;
+                
+                let scheduleDays = null;
+                if (scheduleType === 'weekly') {
+                    const checked = Array.from(document.querySelectorAll('.schedule-day-checkbox:checked')).map(cb => cb.value);
+                    scheduleDays = checked.length > 0 ? checked.join(',') : null;
+                }
+                
+                const data = {
+                    family_member_id: familyId,
+                    medication_id: medicationId,
+                    current_dose: dose,
+                    schedule_type: scheduleType,
+                    schedule_time: scheduleTime,
+                    schedule_days: scheduleDays
+                };
+                
+                // Handle frequency override
+                if (freqTypeOverride === 'fixed') {
+                    const freq = document.getElementById('assign-frequency').value;
+                    if (freq) {
+                        const freqValue = parseFloat(freq);
+                        if (freqValue <= 0) {
+                            showToast('Frequency must be greater than 0', 'error');
+                            setButtonLoading(submitButton, false);
+                            return;
+                        }
+                        data.frequency_hours = freqValue;
+                    }
+                    data.frequency_min_hours = null;
+                    data.frequency_max_hours = null;
+                } else if (freqTypeOverride === 'range') {
+                    const minFreq = document.getElementById('assign-frequency-min').value;
+                    const maxFreq = document.getElementById('assign-frequency-max').value;
+                    if (minFreq && maxFreq) {
+                        const minValue = parseFloat(minFreq);
+                        const maxValue = parseFloat(maxFreq);
+                        if (minValue <= 0 || maxValue <= 0) {
+                            showToast('Frequencies must be greater than 0', 'error');
+                            setButtonLoading(submitButton, false);
+                            return;
+                        }
+                        if (minValue >= maxValue) {
+                            showToast('Minimum frequency must be less than maximum', 'error');
+                            setButtonLoading(submitButton, false);
+                            return;
+                        }
+                        data.frequency_min_hours = minValue;
+                        data.frequency_max_hours = maxValue;
+                    }
+                    data.frequency_hours = null;
+                } else {
+                    // Use medication default - don't set frequency fields
+                    data.frequency_hours = null;
+                    data.frequency_min_hours = null;
+                    data.frequency_max_hours = null;
+                }
+                
                 await assignmentsAPI.create(data);
                 showToast('Medication assigned successfully', 'success');
                 closeModal();
@@ -233,6 +239,8 @@ export async function showAssignMedicationForm() {
                 const errorMsg = error.message || 'Failed to assign medication';
                 showToast(errorMsg, 'error');
                 console.error(error);
+            } finally {
+                setButtonLoading(submitButton, false);
             }
         });
     } catch (error) {

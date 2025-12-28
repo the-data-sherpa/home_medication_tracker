@@ -1,11 +1,16 @@
 /** Medication inventory management */
 import { inventoryAPI, medicationsAPI } from './api.js';
-import { showToast, showModal, closeModal } from './app.js';
+import { showToast, showModal, closeModal, setButtonLoading } from './app.js';
 
 let inventory = [];
 let medications = [];
 
 export async function loadInventory() {
+    const container = document.getElementById('inventory-list');
+    if (container) {
+        container.innerHTML = '<div class="loading"><div class="spinner"></div><p>Loading inventory...</p></div>';
+    }
+    
     try {
         [inventory, medications] = await Promise.all([
             inventoryAPI.getAll(),
@@ -15,6 +20,9 @@ export async function loadInventory() {
         renderLowStockAlerts();
         return inventory;
     } catch (error) {
+        if (container) {
+            container.innerHTML = '<div class="empty-state"><p>Failed to load inventory. Please try again.</p></div>';
+        }
         showToast('Failed to load inventory', 'error');
         console.error(error);
         return [];
@@ -117,15 +125,18 @@ export function showAddInventoryForm() {
     
     document.getElementById('add-inventory-form').addEventListener('submit', async (e) => {
         e.preventDefault();
-        const data = {
-            medication_id: parseInt(document.getElementById('inv-medication').value),
-            quantity: parseFloat(document.getElementById('inv-quantity').value),
-            unit: document.getElementById('inv-unit').value.trim(),
-            low_stock_threshold: document.getElementById('inv-threshold').value ? 
-                parseFloat(document.getElementById('inv-threshold').value) : null
-        };
+        const submitButton = e.target.querySelector('button[type="submit"]');
+        setButtonLoading(submitButton, true);
         
         try {
+            const data = {
+                medication_id: parseInt(document.getElementById('inv-medication').value),
+                quantity: parseFloat(document.getElementById('inv-quantity').value),
+                unit: document.getElementById('inv-unit').value.trim(),
+                low_stock_threshold: document.getElementById('inv-threshold').value ? 
+                    parseFloat(document.getElementById('inv-threshold').value) : null
+            };
+            
             await inventoryAPI.create(data);
             showToast('Inventory added successfully', 'success');
             closeModal();
@@ -134,6 +145,8 @@ export function showAddInventoryForm() {
             const errorMsg = error.message || 'Failed to add inventory';
             showToast(errorMsg, 'error');
             console.error(error);
+        } finally {
+            setButtonLoading(submitButton, false);
         }
     });
 }
@@ -174,14 +187,17 @@ window.editInventory = async function(id) {
     
     document.getElementById('edit-inventory-form').addEventListener('submit', async (e) => {
         e.preventDefault();
-        const data = {
-            quantity: parseFloat(document.getElementById('edit-inv-quantity').value),
-            unit: document.getElementById('edit-inv-unit').value.trim(),
-            low_stock_threshold: document.getElementById('edit-inv-threshold').value ? 
-                parseFloat(document.getElementById('edit-inv-threshold').value) : null
-        };
+        const submitButton = e.target.querySelector('button[type="submit"]');
+        setButtonLoading(submitButton, true);
         
         try {
+            const data = {
+                quantity: parseFloat(document.getElementById('edit-inv-quantity').value),
+                unit: document.getElementById('edit-inv-unit').value.trim(),
+                low_stock_threshold: document.getElementById('edit-inv-threshold').value ? 
+                    parseFloat(document.getElementById('edit-inv-threshold').value) : null
+            };
+            
             await inventoryAPI.update(id, data);
             showToast('Inventory updated successfully', 'success');
             closeModal();
@@ -190,6 +206,8 @@ window.editInventory = async function(id) {
             const errorMsg = error.message || 'Failed to update inventory';
             showToast(errorMsg, 'error');
             console.error(error);
+        } finally {
+            setButtonLoading(submitButton, false);
         }
     });
 };
