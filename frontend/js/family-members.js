@@ -112,7 +112,7 @@ window.deleteFamilyMember = async function(id) {
                 const errorMsg = error.message || 'Failed to remove family member';
                 showToast(errorMsg, 'error');
                 console.error(error);
-                throw error;
+                // Don't re-throw - error is already handled and displayed
             }
         }
     );

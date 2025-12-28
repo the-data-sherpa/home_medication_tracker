@@ -484,11 +484,15 @@ export async function showDeleteConfirmation(itemType, itemName, canDeleteCheck,
         // No dependencies, show standard confirmation
         const confirmMessage = `Are you sure you want to delete ${itemType} "${escapeHtml(itemName)}"?`;
         if (confirm(confirmMessage)) {
+            // Execute onConfirm without catching errors here - let the callback handle them
+            // The callback will show appropriate error messages and handle the error
             await onConfirm();
             return true;
         }
         return false;
     } catch (error) {
+        // Only catch errors from canDeleteCheck, not from onConfirm
+        // onConfirm errors are already handled by the callbacks and should not be re-thrown
         showToast(`Failed to check deletion status: ${error.message}`, 'error');
         console.error(error);
         return false;

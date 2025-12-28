@@ -302,7 +302,7 @@ window.deleteMedication = async function(id) {
                 const errorMsg = error.message || 'Failed to delete medication';
                 showToast(errorMsg, 'error');
                 console.error(error);
-                throw error;
+                // Don't re-throw - error is already handled and displayed
             }
         }
     );
