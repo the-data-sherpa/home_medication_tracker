@@ -90,6 +90,29 @@ Each recommendation has been assigned a feature number (FEAT-001 through FEAT-02
 
 ---
 
+### 4b. Stop/Discontinue Assignment
+**Feature #**: FEAT-004b  
+**Category**: Functionality  
+**Impact**: High  
+**Effort**: Low
+
+- Add "Stop Assignment" or "Discontinue" button to dashboard assignment cards
+- Show confirmation dialog explaining that:
+  - Assignment will be hidden from dashboard
+  - All history will be preserved
+  - Can be reactivated later if needed
+- Use existing `assignmentsAPI.delete()` endpoint (which soft-deletes by setting active=false)
+- Consider adding option to add end date/notes when stopping
+
+**Files to Modify**:
+- `frontend/js/dashboard.js` - Add "Stop Assignment" button
+- `frontend/js/assignments.js` - Add stop/discontinue confirmation dialog
+- `backend/app/routers/assignments.py` - Optionally add end_date field to assignment model
+
+**Rationale**: Currently no user-friendly way to stop medication assignments when child comes off medication. Backend supports it (soft delete), but no UI. This is a critical workflow gap.
+
+---
+
 ### 5. Enhanced Empty States
 **Feature #**: FEAT-005  
 **Category**: UI/UX  
@@ -452,6 +475,7 @@ Use this section to track implementation status:
 | Delete Protection | FEAT-002 | High | Completed | Branch: `feature/FEAT-002-delete-protection` |
 | Edit Assignment | FEAT-003 | High | Completed | Branch: `feat/FEAT-003-edit-assignment` |
 | Duplicate Prevention | FEAT-004 | High | Pending | |
+| Stop/Discontinue Assignment | FEAT-004b | High | Pending | Critical workflow gap - no UI to stop assignments |
 | Enhanced Empty States | FEAT-005 | High | Pending | |
 | Search Functionality | FEAT-006 | Medium | Pending | |
 | Quick Give | FEAT-007 | Medium | Pending | |
