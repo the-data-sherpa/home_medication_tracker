@@ -58,7 +58,21 @@ function renderInventory() {
     if (!container) return;
 
     if (inventory.length === 0) {
-        container.innerHTML = '<div class="empty-state"><p>No inventory records yet. Add one to get started!</p></div>';
+        container.innerHTML = `
+            <div class="empty-state">
+                <div style="font-size: 3rem; margin-bottom: 1rem; opacity: 0.3;">📦</div>
+                <h3 style="margin-bottom: 0.5rem; color: var(--text-color);">No Inventory Records</h3>
+                <p style="color: #666; margin-bottom: 1.5rem; max-width: 500px; margin-left: auto; margin-right: auto;">
+                    Track medication quantities and set low-stock alerts to help manage your medication supply. You'll receive warnings when stock runs low.
+                </p>
+                <button class="btn btn-primary" id="empty-state-add-inventory-btn">Add Inventory</button>
+            </div>
+        `;
+        // Set up the add button handler
+        const addBtn = container.querySelector('#empty-state-add-inventory-btn');
+        if (addBtn) {
+            addBtn.addEventListener('click', () => showAddInventoryForm());
+        }
         return;
     }
 

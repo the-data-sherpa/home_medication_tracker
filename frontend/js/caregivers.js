@@ -29,7 +29,21 @@ function renderCaregivers() {
     if (!container) return;
 
     if (caregivers.length === 0) {
-        container.innerHTML = '<div class="empty-state"><p>No caregivers yet. Add one to get started!</p></div>';
+        container.innerHTML = `
+            <div class="empty-state">
+                <div style="font-size: 3rem; margin-bottom: 1rem; opacity: 0.3;">👤</div>
+                <h3 style="margin-bottom: 0.5rem; color: var(--text-color);">No Caregivers</h3>
+                <p style="color: #666; margin-bottom: 1.5rem; max-width: 500px; margin-left: auto; margin-right: auto;">
+                    Add caregivers to track who administers medications. Caregivers are optional but helpful for multi-person households.
+                </p>
+                <button class="btn btn-primary" id="empty-state-add-caregiver-btn">Add Caregiver</button>
+            </div>
+        `;
+        // Set up the add button handler
+        const addBtn = container.querySelector('#empty-state-add-caregiver-btn');
+        if (addBtn) {
+            addBtn.addEventListener('click', () => showAddCaregiverForm());
+        }
         return;
     }
 

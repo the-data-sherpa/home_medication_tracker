@@ -834,11 +834,18 @@ h2 {
 
 .empty-state {
     text-align: center;
-    padding: 2rem;
+    padding: 3rem 2rem;
     color: #666;
+}
+
+.empty-state h3 {
+    font-size: 1.3rem;
+    font-weight: 600;
+    margin-bottom: 0.75rem;
 }
 
 .empty-state p {
     margin-top: 0.5rem;
+    line-height: 1.6;
 }
 
