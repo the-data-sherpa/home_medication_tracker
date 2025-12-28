@@ -2,6 +2,13 @@
 
 This document tracks recommended improvements for the Home Medication Tracker application. Recommendations are organized by priority and category.
 
+## Feature Numbering
+
+Each recommendation has been assigned a feature number (FEAT-001 through FEAT-024) for use with git branches. Use these feature numbers when creating branches, for example:
+- `feature/FEAT-001-loading-states`
+- `feature/FEAT-002-delete-protection`
+- etc.
+
 ## Priority Legend
 
 - **High Priority**: Critical for usability, data integrity, or preventing user errors
@@ -13,6 +20,7 @@ This document tracks recommended improvements for the Home Medication Tracker ap
 ## High Priority Recommendations
 
 ### 1. Loading States & User Feedback
+**Feature #**: FEAT-001  
 **Category**: UI/UX  
 **Impact**: High  
 **Effort**: Medium
@@ -30,6 +38,7 @@ This document tracks recommended improvements for the Home Medication Tracker ap
 ---
 
 ### 2. Prevent Data Loss - Delete Protection
+**Feature #**: FEAT-002  
 **Category**: Data Integrity  
 **Impact**: Critical  
 **Effort**: Medium
@@ -49,6 +58,7 @@ This document tracks recommended improvements for the Home Medication Tracker ap
 ---
 
 ### 3. Edit Assignment Functionality
+**Feature #**: FEAT-003  
 **Category**: Functionality  
 **Impact**: High  
 **Effort**: Medium
@@ -65,6 +75,7 @@ This document tracks recommended improvements for the Home Medication Tracker ap
 ---
 
 ### 4. Duplicate Assignment Prevention
+**Feature #**: FEAT-004  
 **Category**: Data Integrity  
 **Impact**: High  
 **Effort**: Low
@@ -80,6 +91,7 @@ This document tracks recommended improvements for the Home Medication Tracker ap
 ---
 
 ### 5. Enhanced Empty States
+**Feature #**: FEAT-005  
 **Category**: UI/UX  
 **Impact**: Medium  
 **Effort**: Low
@@ -99,6 +111,7 @@ This document tracks recommended improvements for the Home Medication Tracker ap
 ## Medium Priority Recommendations
 
 ### 6. Search Functionality
+**Feature #**: FEAT-006  
 **Category**: Functionality  
 **Impact**: High  
 **Effort**: Medium
@@ -116,6 +129,7 @@ This document tracks recommended improvements for the Home Medication Tracker ap
 ---
 
 ### 7. Quick Give Medication
+**Feature #**: FEAT-007  
 **Category**: Functionality  
 **Impact**: High  
 **Effort**: Low
@@ -133,6 +147,7 @@ This document tracks recommended improvements for the Home Medication Tracker ap
 ---
 
 ### 8. Inventory Auto-Decrement
+**Feature #**: FEAT-008  
 **Category**: Functionality  
 **Impact**: Medium  
 **Effort**: Medium
@@ -149,6 +164,7 @@ This document tracks recommended improvements for the Home Medication Tracker ap
 ---
 
 ### 9. Browser Notifications for Reminders
+**Feature #**: FEAT-009  
 **Category**: Functionality  
 **Impact**: High  
 **Effort**: Medium
@@ -166,6 +182,7 @@ This document tracks recommended improvements for the Home Medication Tracker ap
 ---
 
 ### 10. Better Error Recovery
+**Feature #**: FEAT-010  
 **Category**: UX  
 **Impact**: Medium  
 **Effort**: Medium
@@ -183,6 +200,7 @@ This document tracks recommended improvements for the Home Medication Tracker ap
 ---
 
 ### 11. History View Enhancements
+**Feature #**: FEAT-011  
 **Category**: UI/UX  
 **Impact**: Medium  
 **Effort**: Medium
@@ -201,6 +219,7 @@ This document tracks recommended improvements for the Home Medication Tracker ap
 ---
 
 ### 12. Form Improvements
+**Feature #**: FEAT-012  
 **Category**: UI/UX  
 **Impact**: Medium  
 **Effort**: Low
@@ -221,6 +240,7 @@ This document tracks recommended improvements for the Home Medication Tracker ap
 ## Low Priority Recommendations
 
 ### 13. Dark Mode
+**Feature #**: FEAT-013  
 **Category**: Personalization  
 **Impact**: Low  
 **Effort**: Medium
@@ -237,6 +257,7 @@ This document tracks recommended improvements for the Home Medication Tracker ap
 ---
 
 ### 14. Advanced Reporting
+**Feature #**: FEAT-014  
 **Category**: Functionality  
 **Impact**: Low  
 **Effort**: High
@@ -254,6 +275,7 @@ This document tracks recommended improvements for the Home Medication Tracker ap
 ---
 
 ### 15. Swipe Gestures (Mobile)
+**Feature #**: FEAT-015  
 **Category**: Mobile UX  
 **Impact**: Low  
 **Effort**: Medium
@@ -269,6 +291,7 @@ This document tracks recommended improvements for the Home Medication Tracker ap
 ---
 
 ### 16. Data Statistics Dashboard
+**Feature #**: FEAT-016  
 **Category**: Functionality  
 **Impact**: Low  
 **Effort**: Medium
@@ -286,6 +309,7 @@ This document tracks recommended improvements for the Home Medication Tracker ap
 ---
 
 ### 17. Undo Functionality
+**Feature #**: FEAT-017  
 **Category**: UX  
 **Impact**: Low  
 **Effort**: Medium
@@ -303,6 +327,7 @@ This document tracks recommended improvements for the Home Medication Tracker ap
 ## Accessibility Improvements
 
 ### 18. ARIA Labels and Keyboard Navigation
+**Feature #**: FEAT-018  
 **Category**: Accessibility  
 **Impact**: Medium  
 **Effort**: Medium
@@ -323,6 +348,7 @@ This document tracks recommended improvements for the Home Medication Tracker ap
 ## Performance Improvements
 
 ### 19. Pagination and Virtual Scrolling
+**Feature #**: FEAT-019  
 **Category**: Performance  
 **Impact**: Medium  
 **Effort**: High
@@ -342,6 +368,7 @@ This document tracks recommended improvements for the Home Medication Tracker ap
 ## Additional Feature Ideas
 
 ### 20. Medication Templates/Presets
+**Feature #**: FEAT-020  
 **Category**: Functionality  
 **Impact**: Low  
 **Effort**: Medium
@@ -351,6 +378,7 @@ This document tracks recommended improvements for the Home Medication Tracker ap
 - Useful for recurring medication regimens
 
 ### 21. Administration Statistics
+**Feature #**: FEAT-021  
 **Category**: Functionality  
 **Impact**: Low  
 **Effort**: Medium
@@ -361,6 +389,7 @@ This document tracks recommended improvements for the Home Medication Tracker ap
 - Export statistics
 
 ### 22. Multiple Daily Schedules
+**Feature #**: FEAT-022  
 **Category**: Functionality  
 **Impact**: Low  
 **Effort**: Medium
@@ -370,6 +399,7 @@ This document tracks recommended improvements for the Home Medication Tracker ap
 - Add "Skip Dose" option with reason
 
 ### 23. Bulk Administration
+**Feature #**: FEAT-023  
 **Category**: Functionality  
 **Impact**: Low  
 **Effort**: Medium
@@ -379,6 +409,7 @@ This document tracks recommended improvements for the Home Medication Tracker ap
 - Single form with multiple medications
 
 ### 24. Assignment Notes
+**Feature #**: FEAT-024  
 **Category**: Functionality  
 **Impact**: Low  
 **Effort**: Low
@@ -415,18 +446,32 @@ This document tracks recommended improvements for the Home Medication Tracker ap
 
 Use this section to track implementation status:
 
-| Recommendation | Priority | Status | Notes |
-|----------------|----------|--------|-------|
-| Loading States | High | Pending | |
-| Delete Protection | High | Pending | |
-| Edit Assignment | High | Pending | |
-| Duplicate Prevention | High | Pending | |
-| Enhanced Empty States | High | Pending | |
-| Search Functionality | Medium | Pending | |
-| Quick Give | Medium | Pending | |
-| Inventory Auto-Decrement | Medium | Pending | |
-| Browser Notifications | Medium | Pending | |
-| Error Recovery | Medium | Pending | |
+| Recommendation | Feature # | Priority | Status | Notes |
+|----------------|-----------|----------|--------|-------|
+| Loading States | FEAT-001 | High | Pending | |
+| Delete Protection | FEAT-002 | High | Pending | |
+| Edit Assignment | FEAT-003 | High | Pending | |
+| Duplicate Prevention | FEAT-004 | High | Pending | |
+| Enhanced Empty States | FEAT-005 | High | Pending | |
+| Search Functionality | FEAT-006 | Medium | Pending | |
+| Quick Give | FEAT-007 | Medium | Pending | |
+| Inventory Auto-Decrement | FEAT-008 | Medium | Pending | |
+| Browser Notifications | FEAT-009 | Medium | Pending | |
+| Error Recovery | FEAT-010 | Medium | Pending | |
+| History View Enhancements | FEAT-011 | Medium | Pending | |
+| Form Improvements | FEAT-012 | Medium | Pending | |
+| Dark Mode | FEAT-013 | Low | Pending | |
+| Advanced Reporting | FEAT-014 | Low | Pending | |
+| Swipe Gestures (Mobile) | FEAT-015 | Low | Pending | |
+| Data Statistics Dashboard | FEAT-016 | Low | Pending | |
+| Undo Functionality | FEAT-017 | Low | Pending | |
+| ARIA Labels and Keyboard Navigation | FEAT-018 | Medium | Pending | |
+| Pagination and Virtual Scrolling | FEAT-019 | Medium | Pending | |
+| Medication Templates/Presets | FEAT-020 | Low | Pending | |
+| Administration Statistics | FEAT-021 | Low | Pending | |
+| Multiple Daily Schedules | FEAT-022 | Low | Pending | |
+| Bulk Administration | FEAT-023 | Low | Pending | |
+| Assignment Notes | FEAT-024 | Low | Pending | |
 
 ---
 
