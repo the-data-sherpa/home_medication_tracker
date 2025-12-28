@@ -1011,3 +1011,80 @@ a:focus {
     top: 0;
 }
 
+/* Quick Give Toggle */
+.quick-give-toggle {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    cursor: pointer;
+    user-select: none;
+}
+
+.quick-give-toggle input[type="checkbox"] {
+    opacity: 0;
+    width: 0;
+    height: 0;
+    position: absolute;
+}
+
+.toggle-slider-small {
+    position: relative;
+    display: inline-block;
+    width: 36px;
+    height: 20px;
+    min-width: 36px;
+    min-height: 20px;
+    background-color: var(--border-color);
+    border-radius: 20px;
+    transition: 0.3s;
+    cursor: pointer;
+}
+
+.toggle-slider-small:before {
+    position: absolute;
+    content: "";
+    height: 16px;
+    width: 16px;
+    left: 2px;
+    bottom: 2px;
+    background-color: white;
+    transition: 0.3s;
+    border-radius: 50%;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.2);
+}
+
+.quick-give-toggle input:checked + .toggle-slider-small {
+    background-color: var(--success-color);
+}
+
+.quick-give-toggle input:checked + .toggle-slider-small:before {
+    transform: translateX(16px);
+}
+
+.quick-give-toggle input:focus + .toggle-slider-small {
+    box-shadow: 0 0 0 2px rgba(40, 167, 69, 0.2);
+}
+
+.give-medication-control {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    flex: 1;
+}
+
+@media (max-width: 767px) {
+    .card-footer {
+        flex-direction: column;
+        gap: 0.5rem;
+    }
+    
+    .give-medication-control {
+        width: 100%;
+        order: -1; /* Put give medication control first on mobile */
+    }
+    
+    .give-medication-control .btn {
+        flex: 1;
+    }
+}
+
