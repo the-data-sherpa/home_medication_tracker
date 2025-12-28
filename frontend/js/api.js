@@ -31,8 +31,18 @@ async function apiRequest(endpoint, options = {}) {
         }
         
         if (!response.ok) {
-            const errorMsg = data.detail || data.message || `HTTP error! status: ${response.status}`;
-            throw new Error(errorMsg);
+            // Handle structured error responses
+            let errorMsg = data.detail || data.message || `HTTP error! status: ${response.status}`;
+            // If detail is an object, try to extract message or stringify it
+            if (typeof errorMsg === 'object') {
+                errorMsg = errorMsg.message || JSON.stringify(errorMsg);
+            }
+            const error = new Error(errorMsg);
+            // Attach the full data for structured error handling
+            if (typeof data.detail === 'object') {
+                error.detail = data.detail;
+            }
+            throw error;
         }
         
         return data;
@@ -47,7 +57,8 @@ export const familyMembersAPI = {
     getAll: () => apiRequest('/family-members'),
     create: (data) => apiRequest('/family-members', { method: 'POST', body: data }),
     update: (id, data) => apiRequest(`/family-members/${id}`, { method: 'PUT', body: data }),
-    delete: (id) => apiRequest(`/family-members/${id}`, { method: 'DELETE' })
+    delete: (id) => apiRequest(`/family-members/${id}`, { method: 'DELETE' }),
+    canDelete: (id) => apiRequest(`/family-members/${id}/can-delete`)
 };
 
 // Caregivers API
@@ -55,7 +66,8 @@ export const caregiversAPI = {
     getAll: () => apiRequest('/caregivers'),
     create: (data) => apiRequest('/caregivers', { method: 'POST', body: data }),
     update: (id, data) => apiRequest(`/caregivers/${id}`, { method: 'PUT', body: data }),
-    delete: (id) => apiRequest(`/caregivers/${id}`, { method: 'DELETE' })
+    delete: (id) => apiRequest(`/caregivers/${id}`, { method: 'DELETE' }),
+    canDelete: (id) => apiRequest(`/caregivers/${id}/can-delete`)
 };
 
 // Medications API
@@ -64,7 +76,8 @@ export const medicationsAPI = {
     get: (id) => apiRequest(`/medications/${id}`),
     create: (data) => apiRequest('/medications', { method: 'POST', body: data }),
     update: (id, data) => apiRequest(`/medications/${id}`, { method: 'PUT', body: data }),
-    delete: (id) => apiRequest(`/medications/${id}`, { method: 'DELETE' })
+    delete: (id) => apiRequest(`/medications/${id}`, { method: 'DELETE' }),
+    canDelete: (id) => apiRequest(`/medications/${id}/can-delete`)
 };
 
 // Assignments API

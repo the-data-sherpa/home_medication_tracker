@@ -53,7 +53,7 @@ Home Medication Tracker helps families manage medications with features like:
 
 1. **Clone the repository:**
    ```bash
-   git clone <your-repo-url>
+   git clone git@github.com:the-data-sherpa/home_medication_tracker.git
    cd home_medication_tracker
    ```
 

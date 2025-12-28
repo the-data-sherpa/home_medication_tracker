@@ -1,6 +1,6 @@
 /** Medication management */
 import { medicationsAPI } from './api.js';
-import { showToast, showModal, closeModal, setButtonLoading } from './app.js';
+import { showToast, showModal, closeModal, setButtonLoading, showDeleteConfirmation } from './app.js';
 
 let medications = [];
 
@@ -286,19 +286,26 @@ window.editMedication = async function(id) {
 };
 
 window.deleteMedication = async function(id) {
-    if (!confirm('Are you sure you want to delete this medication?')) {
-        return;
-    }
+    const med = medications.find(m => m.id === id);
+    if (!med) return;
     
-    try {
-        await medicationsAPI.delete(id);
-        showToast('Medication deleted', 'success');
-        await loadMedications();
-    } catch (error) {
-        const errorMsg = error.message || 'Failed to delete medication';
-        showToast(errorMsg, 'error');
-        console.error(error);
-    }
+    const confirmed = await showDeleteConfirmation(
+        'medication',
+        med.name,
+        () => medicationsAPI.canDelete(id),
+        async () => {
+            try {
+                await medicationsAPI.delete(id);
+                showToast('Medication deleted', 'success');
+                await loadMedications();
+            } catch (error) {
+                const errorMsg = error.message || 'Failed to delete medication';
+                showToast(errorMsg, 'error');
+                console.error(error);
+                throw error;
+            }
+        }
+    );
 };
 
 function escapeHtml(text) {

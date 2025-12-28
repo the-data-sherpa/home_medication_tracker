@@ -1,6 +1,6 @@
 /** Family member management */
 import { familyMembersAPI } from './api.js';
-import { showToast, showModal, closeModal, setButtonLoading } from './app.js';
+import { showToast, showModal, closeModal, setButtonLoading, showDeleteConfirmation } from './app.js';
 
 let familyMembers = [];
 
@@ -93,22 +93,29 @@ export function showAddFamilyMemberForm() {
 }
 
 window.deleteFamilyMember = async function(id) {
-    if (!confirm('Are you sure you want to remove this family member?')) {
-        return;
-    }
+    const member = familyMembers.find(m => m.id === id);
+    if (!member) return;
     
-    try {
-        await familyMembersAPI.delete(id);
-        showToast('Family member removed', 'success');
-        await loadFamilyMembers();
-        if (window.loadDashboard) {
-            await window.loadDashboard();
+    const confirmed = await showDeleteConfirmation(
+        'family member',
+        member.name,
+        () => familyMembersAPI.canDelete(id),
+        async () => {
+            try {
+                await familyMembersAPI.delete(id);
+                showToast('Family member removed', 'success');
+                await loadFamilyMembers();
+                if (window.loadDashboard) {
+                    await window.loadDashboard();
+                }
+            } catch (error) {
+                const errorMsg = error.message || 'Failed to remove family member';
+                showToast(errorMsg, 'error');
+                console.error(error);
+                throw error;
+            }
         }
-    } catch (error) {
-        const errorMsg = error.message || 'Failed to remove family member';
-        showToast(errorMsg, 'error');
-        console.error(error);
-    }
+    );
 };
 
 function escapeHtml(text) {

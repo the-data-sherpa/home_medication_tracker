@@ -1,6 +1,6 @@
 """Medication management endpoints."""
 from fastapi import APIRouter, Depends, HTTPException
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import Session, joinedload
 from typing import List
 from .. import models, schemas
 from ..database import get_db
@@ -77,12 +77,67 @@ def update_medication(medication_id: int, medication: schemas.MedicationUpdate, 
         raise HTTPException(status_code=500, detail=f"Failed to update medication: {str(e)}")
 
 
+@router.get("/{medication_id}/can-delete")
+def can_delete_medication(medication_id: int, db: Session = Depends(get_db)):
+    """Check if a medication can be deleted (no active assignments)."""
+    db_medication = db.query(models.Medication).filter(models.Medication.id == medication_id).first()
+    if not db_medication:
+        raise HTTPException(status_code=404, detail="Medication not found")
+    
+    # Check for active assignments
+    active_assignments = db.query(models.MedicationAssignment).options(
+        joinedload(models.MedicationAssignment.family_member)
+    ).filter(
+        models.MedicationAssignment.medication_id == medication_id,
+        models.MedicationAssignment.active == True
+    ).all()
+    
+    assignment_details = [
+        {
+            "id": assignment.id,
+            "family_member_name": assignment.family_member.name if assignment.family_member else "Unknown"
+        }
+        for assignment in active_assignments
+    ]
+    
+    return {
+        "can_delete": len(active_assignments) == 0,
+        "active_assignments": assignment_details,
+        "count": len(active_assignments)
+    }
+
+
 @router.delete("/{medication_id}", status_code=204)
 def delete_medication(medication_id: int, db: Session = Depends(get_db)):
     """Delete a medication."""
     db_medication = db.query(models.Medication).filter(models.Medication.id == medication_id).first()
     if not db_medication:
         raise HTTPException(status_code=404, detail="Medication not found")
+    
+    # Check for active assignments
+    active_assignments = db.query(models.MedicationAssignment).options(
+        joinedload(models.MedicationAssignment.family_member)
+    ).filter(
+        models.MedicationAssignment.medication_id == medication_id,
+        models.MedicationAssignment.active == True
+    ).all()
+    
+    if active_assignments:
+        assignment_details = [
+            {
+                "id": assignment.id,
+                "family_member_name": assignment.family_member.name if assignment.family_member else "Unknown"
+            }
+            for assignment in active_assignments
+        ]
+        raise HTTPException(
+            status_code=400,
+            detail={
+                "message": "Cannot delete medication with active assignments",
+                "active_assignments": assignment_details,
+                "count": len(active_assignments)
+            }
+        )
     
     db.delete(db_medication)
     db.commit()
