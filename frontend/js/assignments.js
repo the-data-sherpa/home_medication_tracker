@@ -242,9 +242,43 @@ export async function showAssignMedicationForm() {
                     await window.loadDashboard();
                 }
             } catch (error) {
-                const errorMsg = error.message || 'Failed to assign medication';
-                showToast(errorMsg, 'error');
-                console.error(error);
+                // Check if this is a duplicate assignment error (409 Conflict)
+                if (error.status === 409 && error.detail) {
+                    const detail = error.detail;
+                    const existingId = detail.existing_assignment_id;
+                    const isActive = detail.is_active === true;
+                    
+                    // Show dialog asking if user wants to reactivate/use existing assignment
+                    const confirmed = await showDuplicateAssignmentDialog(
+                        detail.family_member_name || 'Unknown',
+                        detail.medication_name || 'Unknown',
+                        isActive
+                    );
+                    
+                    if (confirmed && existingId) {
+                        // Reactivate the existing assignment (if inactive) or just close (if already active)
+                        try {
+                            if (!isActive) {
+                                await assignmentsAPI.update(existingId, { active: true });
+                                showToast('Assignment reactivated successfully', 'success');
+                            } else {
+                                showToast('Using existing assignment', 'success');
+                            }
+                            closeModal();
+                            if (window.loadDashboard) {
+                                await window.loadDashboard();
+                            }
+                        } catch (reactivateError) {
+                            const errorMsg = reactivateError.message || 'Failed to reactivate assignment';
+                            showToast(errorMsg, 'error');
+                            console.error(reactivateError);
+                        }
+                    }
+                } else {
+                    const errorMsg = error.message || 'Failed to assign medication';
+                    showToast(errorMsg, 'error');
+                    console.error(error);
+                }
             } finally {
                 setButtonLoading(submitButton, false);
             }
@@ -542,6 +576,232 @@ function formatFieldName(fieldName) {
     };
     return fieldMap[fieldName] || fieldName.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
 }
+
+async function showDuplicateAssignmentDialog(familyMemberName, medicationName, isActive) {
+    return new Promise((resolve) => {
+        const isCurrentlyActive = isActive === true;
+        const title = isCurrentlyActive ? 'Duplicate Assignment' : 'Existing Inactive Assignment';
+        const message = isCurrentlyActive 
+            ? `An active assignment already exists for <strong>${escapeHtml(medicationName)}</strong> for <strong>${escapeHtml(familyMemberName)}</strong>.`
+            : `An inactive (stopped) assignment exists for <strong>${escapeHtml(medicationName)}</strong> for <strong>${escapeHtml(familyMemberName)}</strong>.`;
+        const buttonText = isCurrentlyActive ? 'Use Existing Assignment' : 'Reactivate Existing Assignment';
+        
+        const content = `
+            <h3>${title}</h3>
+            <p>${message}</p>
+            <p>Would you like to ${isCurrentlyActive ? 'use' : 'reactivate'} the existing assignment instead of creating a new one?</p>
+            ${isCurrentlyActive ? '<p style="color: #666; font-size: 0.9em;"><em>Note: All administration history will be preserved.</em></p>' : ''}
+            <div class="form-actions" style="margin-top: 1.5rem;">
+                <button type="button" class="btn btn-primary" id="reactivate-btn">${buttonText}</button>
+                <button type="button" class="btn btn-secondary" id="cancel-duplicate-btn">Cancel</button>
+            </div>
+        `;
+        
+        showModal(content);
+        
+        // Handle reactivate button
+        document.getElementById('reactivate-btn')?.addEventListener('click', () => {
+            closeModal();
+            resolve(true);
+        });
+        
+        // Handle cancel button
+        document.getElementById('cancel-duplicate-btn')?.addEventListener('click', () => {
+            closeModal();
+            resolve(false);
+        });
+    });
+}
+
+export async function showStopAssignmentDialog(assignment) {
+    const content = `
+        <h3>Stop Assignment</h3>
+        <p>Are you sure you want to stop the assignment for <strong>${escapeHtml(assignment.medication.name)}</strong> 
+        for <strong>${escapeHtml(assignment.family_member.name)}</strong>?</p>
+        <div style="background: #f5f5f5; padding: 1rem; border-radius: 4px; margin: 1rem 0;">
+            <p style="margin: 0.5rem 0;"><strong>What will happen:</strong></p>
+            <ul style="margin: 0.5rem 0; padding-left: 1.5rem;">
+                <li>The assignment will be removed from the dashboard</li>
+                <li>All administration history will be preserved</li>
+                <li>You can reactivate this assignment later if needed</li>
+            </ul>
+        </div>
+        <div class="form-actions">
+            <button type="button" class="btn btn-danger" id="confirm-stop-btn">Stop Assignment</button>
+            <button type="button" class="btn btn-secondary" onclick="closeModal()">Cancel</button>
+        </div>
+    `;
+    
+    showModal(content);
+    
+    document.getElementById('confirm-stop-btn')?.addEventListener('click', async () => {
+        const button = document.getElementById('confirm-stop-btn');
+        setButtonLoading(button, true);
+        
+        try {
+            await assignmentsAPI.delete(assignment.id);
+            showToast('Assignment stopped successfully', 'success');
+            closeModal();
+            if (window.loadDashboard) {
+                await window.loadDashboard();
+            }
+        } catch (error) {
+            const errorMsg = error.message || 'Failed to stop assignment';
+            showToast(errorMsg, 'error');
+            console.error(error);
+        } finally {
+            setButtonLoading(button, false);
+        }
+    });
+}
+
+let inactiveAssignments = [];
+let inactiveAssignmentsPage = 1;
+const INACTIVE_ASSIGNMENTS_PER_PAGE = 5;
+
+export async function loadInactiveAssignments(page = 1) {
+    const container = document.getElementById('inactive-assignments-list');
+    if (!container) return;
+    
+    container.innerHTML = '<div class="loading"><div class="spinner"></div><p>Loading inactive assignments...</p></div>';
+    
+    try {
+        inactiveAssignments = await assignmentsAPI.getAll({ active: false });
+        inactiveAssignmentsPage = page;
+        renderInactiveAssignments(inactiveAssignments, page);
+        return inactiveAssignments;
+    } catch (error) {
+        container.innerHTML = '<div class="empty-state"><p>Failed to load inactive assignments. Please try again.</p></div>';
+        showToast('Failed to load inactive assignments', 'error');
+        console.error(error);
+        return [];
+    }
+}
+
+function renderInactiveAssignments(assignments, page = 1) {
+    const container = document.getElementById('inactive-assignments-list');
+    if (!container) return;
+    
+    if (assignments.length === 0) {
+        container.innerHTML = '<div class="empty-state"><p>No inactive assignments. Stopped assignments will appear here.</p></div>';
+        return;
+    }
+    
+    // Sort by updated_at descending (most recently stopped first)
+    const sortedAssignments = [...assignments].sort((a, b) => {
+        const dateA = new Date(a.updated_at || a.created_at);
+        const dateB = new Date(b.updated_at || b.created_at);
+        return dateB - dateA;
+    });
+    
+    // Calculate pagination
+    const totalPages = Math.ceil(sortedAssignments.length / INACTIVE_ASSIGNMENTS_PER_PAGE);
+    const startIdx = (page - 1) * INACTIVE_ASSIGNMENTS_PER_PAGE;
+    const endIdx = startIdx + INACTIVE_ASSIGNMENTS_PER_PAGE;
+    const pageAssignments = sortedAssignments.slice(startIdx, endIdx);
+    
+    const assignmentsHtml = pageAssignments.map(assignment => {
+        const dose = assignment.current_dose || assignment.medication.default_dose;
+        
+        // Format stopped date if available
+        let stoppedDate = '';
+        if (assignment.updated_at && assignment.updated_at !== assignment.created_at) {
+            const date = new Date(assignment.updated_at);
+            stoppedDate = `<span style="color: #666; font-size: 0.85em;"> • Stopped: ${date.toLocaleDateString()}</span>`;
+        }
+        
+        return `
+            <div class="card" style="padding: 0.75rem; margin-bottom: 0.5rem;">
+                <div style="display: flex; justify-content: space-between; align-items: start; flex-wrap: wrap; gap: 0.5rem;">
+                    <div style="flex: 1; min-width: 200px;">
+                        <div style="font-weight: 600;">${escapeHtml(assignment.medication.name)}</div>
+                        <div style="color: #666; font-size: 0.9em; margin-top: 0.25rem;">
+                            ${escapeHtml(assignment.family_member.name)}${stoppedDate}
+                        </div>
+                        <div style="color: #666; font-size: 0.85em; margin-top: 0.25rem;">
+                            ${escapeHtml(dose)}
+                        </div>
+                    </div>
+                    <div style="display: flex; gap: 0.5rem; flex-wrap: wrap;">
+                        <button class="btn btn-primary btn-small" onclick="reactivateAssignment(${assignment.id})" style="white-space: nowrap;">Reactivate</button>
+                        <button class="btn btn-secondary btn-small" onclick="viewAssignmentHistory(${assignment.id})" style="white-space: nowrap;">History</button>
+                    </div>
+                </div>
+            </div>
+        `;
+    }).join('');
+    
+    // Build pagination controls
+    let paginationHtml = '';
+    if (totalPages > 1) {
+        paginationHtml = `
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 1rem; padding-top: 1rem; border-top: 1px solid var(--border-color);">
+                <div style="color: #666; font-size: 0.9em;">
+                    Showing ${startIdx + 1}-${Math.min(endIdx, sortedAssignments.length)} of ${sortedAssignments.length}
+                </div>
+                <div style="display: flex; gap: 0.5rem; align-items: center;">
+                    <button class="btn btn-secondary btn-small" onclick="loadInactiveAssignmentsPage(${page - 1})" ${page === 1 ? 'disabled' : ''} style="min-width: auto; padding: 0.4rem 0.8rem;">
+                        Previous
+                    </button>
+                    <span style="color: #666; font-size: 0.9em; padding: 0 0.5rem;">
+                        Page ${page} of ${totalPages}
+                    </span>
+                    <button class="btn btn-secondary btn-small" onclick="loadInactiveAssignmentsPage(${page + 1})" ${page === totalPages ? 'disabled' : ''} style="min-width: auto; padding: 0.4rem 0.8rem;">
+                        Next
+                    </button>
+                </div>
+            </div>
+        `;
+    }
+    
+    container.innerHTML = assignmentsHtml + paginationHtml;
+}
+
+window.loadInactiveAssignmentsPage = async function(page) {
+    await loadInactiveAssignments(page);
+    // Scroll to top of inactive assignments section
+    const container = document.getElementById('inactive-assignments-list');
+    if (container) {
+        container.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    }
+};
+
+window.reactivateAssignment = async function(assignmentId) {
+    try {
+        await assignmentsAPI.update(assignmentId, { active: true });
+        showToast('Assignment reactivated successfully', 'success');
+        // Reload inactive assignments list (stay on same page if possible)
+        await loadInactiveAssignments(inactiveAssignmentsPage);
+        // Reload dashboard if it's currently displayed
+        if (window.loadDashboard) {
+            await window.loadDashboard();
+        }
+    } catch (error) {
+        const errorMsg = error.message || 'Failed to reactivate assignment';
+        showToast(errorMsg, 'error');
+        console.error(error);
+    }
+};
+
+window.viewAssignmentHistory = async function(assignmentId) {
+    // Switch to history view and filter by assignment
+    const historyView = document.getElementById('history-view');
+    const dashboardView = document.getElementById('dashboard-view');
+    
+    if (historyView && dashboardView) {
+        document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
+        document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+        
+        historyView.classList.add('active');
+        document.querySelector('[data-view="history"]')?.classList.add('active');
+        
+        // Set filter and load history
+        if (window.loadHistory) {
+            window.currentHistoryFilter = { assignment_id: assignmentId };
+            await window.loadHistory();
+        }
+    }
+};
 
 function escapeHtml(text) {
     if (!text) return '';

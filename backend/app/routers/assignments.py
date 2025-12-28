@@ -46,6 +46,26 @@ def create_assignment(assignment: schemas.MedicationAssignmentCreate, db: Sessio
     if not medication:
         raise HTTPException(status_code=404, detail="Medication not found")
     
+    # Check for existing assignment (active or inactive) with same medication + family member
+    existing_assignment = db.query(models.MedicationAssignment).filter(
+        models.MedicationAssignment.family_member_id == assignment.family_member_id,
+        models.MedicationAssignment.medication_id == assignment.medication_id
+    ).first()
+    
+    if existing_assignment:
+        # Return error with details about existing assignment (whether active or inactive)
+        message = "An active assignment already exists for this medication and family member" if existing_assignment.active else "An inactive assignment exists for this medication and family member. Would you like to reactivate it?"
+        raise HTTPException(
+            status_code=409,  # Conflict status code
+            detail={
+                "message": message,
+                "existing_assignment_id": existing_assignment.id,
+                "family_member_name": family_member.name,
+                "medication_name": medication.name,
+                "is_active": existing_assignment.active
+            }
+        )
+    
     try:
         db_assignment = models.MedicationAssignment(**assignment.model_dump())
         db.add(db_assignment)

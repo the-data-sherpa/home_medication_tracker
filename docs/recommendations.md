@@ -474,8 +474,8 @@ Use this section to track implementation status:
 | Loading States | FEAT-001 | High | Completed | Branch: `feature/FEAT-001-loading-states` |
 | Delete Protection | FEAT-002 | High | Completed | Branch: `feature/FEAT-002-delete-protection` |
 | Edit Assignment | FEAT-003 | High | Completed | Branch: `feat/FEAT-003-edit-assignment` |
-| Duplicate Prevention | FEAT-004 | High | Pending | |
-| Stop/Discontinue Assignment | FEAT-004b | High | Pending | Critical workflow gap - no UI to stop assignments |
+| Duplicate Prevention | FEAT-004 | High | Completed | Branch: Current |
+| Stop/Discontinue Assignment | FEAT-004b | High | Completed | Branch: Current |
 | Enhanced Empty States | FEAT-005 | High | Pending | |
 | Search Functionality | FEAT-006 | Medium | Pending | |
 | Quick Give | FEAT-007 | Medium | Pending | |

@@ -38,6 +38,7 @@ async function apiRequest(endpoint, options = {}) {
                 errorMsg = errorMsg.message || JSON.stringify(errorMsg);
             }
             const error = new Error(errorMsg);
+            error.status = response.status;  // Attach status code for error handling
             // Attach the full data for structured error handling
             if (typeof data.detail === 'object') {
                 error.detail = data.detail;
