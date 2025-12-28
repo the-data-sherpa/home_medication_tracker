@@ -6,67 +6,102 @@
     <title>Home Medication Tracker</title>
     <link rel="icon" type="image/svg+xml" href="/static/favicon.svg">
     <link rel="stylesheet" href="/static/css/style.css">
+    <style>
+        /* Screen reader only class */
+        .sr-only {
+            position: absolute;
+            width: 1px;
+            height: 1px;
+            padding: 0;
+            margin: -1px;
+            overflow: hidden;
+            clip: rect(0, 0, 0, 0);
+            white-space: nowrap;
+            border-width: 0;
+        }
+        
+        /* Skip link */
+        .skip-link {
+            position: absolute;
+            top: -40px;
+            left: 0;
+            background: var(--primary-color);
+            color: white;
+            padding: 8px;
+            text-decoration: none;
+            z-index: 1000;
+        }
+        
+        .skip-link:focus {
+            top: 0;
+        }
+    </style>
 </head>
 <body>
+    <a href="#main-content" class="skip-link">Skip to main content</a>
     <div class="container">
         <header>
             <div class="header-top">
                 <h1>Medication Tracker</h1>
-                <button class="hamburger-btn" id="hamburger-btn" aria-label="Toggle menu">
-                    <span></span>
-                    <span></span>
-                    <span></span>
+                <button class="hamburger-btn" id="hamburger-btn" aria-label="Toggle menu" aria-expanded="false" aria-controls="main-nav">
+                    <span aria-hidden="true"></span>
+                    <span aria-hidden="true"></span>
+                    <span aria-hidden="true"></span>
                 </button>
             </div>
-            <nav class="main-nav" id="main-nav">
-                <button class="nav-btn active" data-view="dashboard">Dashboard</button>
-                <button class="nav-btn" data-view="medications">Medications</button>
-                <button class="nav-btn" data-view="family">Family</button>
-                <button class="nav-btn" data-view="history">History</button>
-                <button class="nav-btn" data-view="settings">Settings</button>
+            <nav class="main-nav" id="main-nav" role="navigation" aria-label="Main navigation">
+                <button class="nav-btn active" data-view="dashboard" aria-current="page">Dashboard</button>
+                <button class="nav-btn" data-view="medications" aria-label="View medications">Medications</button>
+                <button class="nav-btn" data-view="family" aria-label="View family members">Family</button>
+                <button class="nav-btn" data-view="history" aria-label="View administration history">History</button>
+                <button class="nav-btn" data-view="settings" aria-label="View settings">Settings</button>
             </nav>
         </header>
 
-        <main>
+        <main id="main-content" role="main">
             <!-- Dashboard View -->
-            <div id="dashboard-view" class="view active">
+            <div id="dashboard-view" class="view active" role="region" aria-label="Medication Dashboard" aria-hidden="false">
                 <h2>Medication Dashboard</h2>
-                <div id="assignments-list" class="assignments-container"></div>
+                <div id="assignments-list" class="assignments-container" role="list" aria-label="Medication assignments"></div>
             </div>
 
             <!-- Medications View -->
-            <div id="medications-view" class="view">
+            <div id="medications-view" class="view" role="region" aria-label="Medications" aria-hidden="true">
                 <h2>Medications</h2>
-                <button class="btn btn-primary" id="add-medication-btn">Add Medication</button>
-                <div id="medications-list" class="list-container"></div>
+                <button class="btn btn-primary" id="add-medication-btn" aria-label="Add a new medication">Add Medication</button>
+                <div id="medications-list" class="list-container" role="list" aria-label="Medication list"></div>
             </div>
 
             <!-- Family Members View -->
-            <div id="family-view" class="view">
+            <div id="family-view" class="view" role="region" aria-label="Family Members" aria-hidden="true">
                 <h2>Family Members</h2>
-                <button class="btn btn-primary" id="add-family-btn">Add Family Member</button>
-                <div id="family-list" class="list-container"></div>
+                <button class="btn btn-primary" id="add-family-btn" aria-label="Add a new family member">Add Family Member</button>
+                <div id="family-list" class="list-container" role="list" aria-label="Family members list"></div>
             </div>
 
             <!-- History View -->
-            <div id="history-view" class="view">
+            <div id="history-view" class="view" role="region" aria-label="Administration History" aria-hidden="true">
                 <h2>Administration History</h2>
-                <div class="filters">
-                    <select id="history-family-filter">
+                <div class="filters" role="group" aria-label="History filters">
+                    <label for="history-family-filter" class="sr-only">Filter by family member</label>
+                    <select id="history-family-filter" aria-label="Filter by family member">
                         <option value="">All Family Members</option>
                     </select>
-                    <select id="history-medication-filter">
+                    <label for="history-medication-filter" class="sr-only">Filter by medication</label>
+                    <select id="history-medication-filter" aria-label="Filter by medication">
                         <option value="">All Medications</option>
                     </select>
-                    <input type="date" id="history-start-date" placeholder="Start Date">
-                    <input type="date" id="history-end-date" placeholder="End Date">
-                    <button class="btn btn-secondary" id="history-filter-btn">Filter</button>
+                    <label for="history-start-date" class="sr-only">Start date</label>
+                    <input type="date" id="history-start-date" aria-label="Filter from start date">
+                    <label for="history-end-date" class="sr-only">End date</label>
+                    <input type="date" id="history-end-date" aria-label="Filter to end date">
+                    <button class="btn btn-secondary" id="history-filter-btn" aria-label="Apply filters">Filter</button>
                 </div>
-                <div id="history-list" class="list-container"></div>
+                <div id="history-list" class="list-container" role="list" aria-label="Administration history"></div>
             </div>
 
             <!-- Settings View -->
-            <div id="settings-view" class="view">
+            <div id="settings-view" class="view" role="region" aria-label="Settings" aria-hidden="true">
                 <h2>Settings</h2>
                 
                 <div class="settings-section">
@@ -84,46 +119,48 @@
                 <div class="settings-section">
                     <h3>Caregivers</h3>
                     <p style="color: var(--text-secondary);">Manage caregivers who can administer medications.</p>
-                    <button class="btn btn-primary" id="add-caregiver-btn">Add Caregiver</button>
-                    <div id="caregivers-list" class="list-container" style="margin-top: 1rem;"></div>
+                    <button class="btn btn-primary" id="add-caregiver-btn" aria-label="Add a new caregiver">Add Caregiver</button>
+                    <div id="caregivers-list" class="list-container" style="margin-top: 1rem;" role="list" aria-label="Caregivers list"></div>
                 </div>
                 
                 <div class="settings-section">
                     <h3>Medication Inventory</h3>
                     <p style="color: var(--text-secondary);">Track medication quantities and receive low-stock alerts.</p>
-                    <button class="btn btn-primary" id="add-inventory-btn">Add Inventory</button>
-                    <div id="low-stock-alerts" class="alerts" style="margin-top: 1rem;"></div>
-                    <div id="inventory-list" class="list-container" style="margin-top: 1rem;"></div>
+                    <button class="btn btn-primary" id="add-inventory-btn" aria-label="Add inventory record">Add Inventory</button>
+                    <div id="low-stock-alerts" class="alerts" style="margin-top: 1rem;" role="alert" aria-live="polite"></div>
+                    <div id="inventory-list" class="list-container" style="margin-top: 1rem;" role="list" aria-label="Inventory list"></div>
                 </div>
                 
                 <div class="settings-section">
                     <h3>Inactive Assignments</h3>
                     <p style="color: var(--text-secondary);">View and reactivate stopped medication assignments.</p>
-                    <div id="inactive-assignments-list" class="list-container" style="margin-top: 1rem;"></div>
+                    <div id="inactive-assignments-list" class="list-container" style="margin-top: 1rem;" role="list" aria-label="Inactive assignments"></div>
                 </div>
                 
                 <div class="settings-section">
                     <h3>Export Data</h3>
-                    <button class="btn btn-primary" id="export-json-btn">Export as JSON</button>
-                    <button class="btn btn-primary" id="export-csv-btn">Export as CSV</button>
+                    <button class="btn btn-primary" id="export-json-btn" aria-label="Export data as JSON file">Export as JSON</button>
+                    <button class="btn btn-primary" id="export-csv-btn" aria-label="Export data as CSV file">Export as CSV</button>
                 </div>
                 <div class="settings-section">
                     <h3>Import Data</h3>
-                    <input type="file" id="import-file" accept=".json" style="display: none;">
-                    <button class="btn btn-secondary" id="import-btn">Import from JSON</button>
+                    <label for="import-file" class="sr-only">Import JSON file</label>
+                    <input type="file" id="import-file" accept=".json" style="display: none;" aria-label="Select JSON file to import">
+                    <button class="btn btn-secondary" id="import-btn" aria-label="Import data from JSON file">Import from JSON</button>
                 </div>
             </div>
         </main>
 
         <!-- Modals -->
-        <div id="modal-overlay" class="modal-overlay">
+        <div id="modal-overlay" class="modal-overlay" role="dialog" aria-modal="true" aria-labelledby="modal-title" aria-hidden="true">
             <div class="modal">
-                <button class="modal-close">&times;</button>
+                <button class="modal-close" aria-label="Close dialog">&times;</button>
                 <div id="modal-content"></div>
             </div>
         </div>
 
-        <div id="toast-container" class="toast-container"></div>
+        <div id="toast-container" class="toast-container" role="region" aria-live="polite" aria-atomic="true"></div>
+        <div id="aria-live-region" class="sr-only" role="status" aria-live="polite" aria-atomic="true"></div>
     </div>
 
     <script type="module" src="/static/js/api.js"></script>

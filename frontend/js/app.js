@@ -24,9 +24,23 @@ function setupHamburgerMenu() {
     const mainNav = document.getElementById('main-nav');
     
     if (hamburgerBtn && mainNav) {
-        hamburgerBtn.addEventListener('click', () => {
-            hamburgerBtn.classList.toggle('active');
-            mainNav.classList.toggle('active');
+        const toggleMenu = () => {
+            const isActive = mainNav.classList.toggle('active');
+            hamburgerBtn.classList.toggle('active', isActive);
+            hamburgerBtn.setAttribute('aria-expanded', isActive ? 'true' : 'false');
+        };
+        
+        hamburgerBtn.addEventListener('click', toggleMenu);
+        
+        // Keyboard support for hamburger menu
+        hamburgerBtn.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter' || e.key === ' ') {
+                e.preventDefault();
+                toggleMenu();
+            } else if (e.key === 'Escape' && mainNav.classList.contains('active')) {
+                toggleMenu();
+                hamburgerBtn.focus();
+            }
         });
         
         // Close menu when clicking a nav button on mobile
@@ -37,6 +51,7 @@ function setupHamburgerMenu() {
                 if (window.innerWidth < 768) {
                     hamburgerBtn.classList.remove('active');
                     mainNav.classList.remove('active');
+                    hamburgerBtn.setAttribute('aria-expanded', 'false');
                 }
             });
         });
@@ -49,6 +64,7 @@ function setupHamburgerMenu() {
                 !hamburgerBtn.contains(e.target)) {
                 hamburgerBtn.classList.remove('active');
                 mainNav.classList.remove('active');
+                hamburgerBtn.setAttribute('aria-expanded', 'false');
             }
         });
     }
@@ -67,17 +83,32 @@ function setupNavigation() {
 
 function switchView(viewName) {
     // Hide all views
-    document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
-    document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+    document.querySelectorAll('.view').forEach(v => {
+        v.classList.remove('active');
+        v.setAttribute('aria-hidden', 'true');
+    });
+    document.querySelectorAll('.nav-btn').forEach(b => {
+        b.classList.remove('active');
+        b.removeAttribute('aria-current');
+    });
     
     // Show selected view
     const view = document.getElementById(`${viewName}-view`);
     const btn = document.querySelector(`[data-view="${viewName}"]`);
     
-    if (view) view.classList.add('active');
-    if (btn) btn.classList.add('active');
+    if (view) {
+        view.classList.add('active');
+        view.setAttribute('aria-hidden', 'false');
+    }
+    if (btn) {
+        btn.classList.add('active');
+        btn.setAttribute('aria-current', 'page');
+    }
     
     currentView = viewName;
+    
+    // Announce view change to screen readers
+    announceToScreenReader(`Navigated to ${viewName} view`);
     
     // Load view-specific data
     switch(viewName) {
@@ -360,14 +391,54 @@ async function populateHistoryFilters() {
     }
 }
 
+// Screen reader announcements
+export function announceToScreenReader(message) {
+    const liveRegion = document.getElementById('aria-live-region');
+    if (liveRegion) {
+        liveRegion.textContent = message;
+        // Clear after announcement
+        setTimeout(() => {
+            liveRegion.textContent = '';
+        }, 1000);
+    }
+}
+
+// Store the element that had focus before modal opened
+let previousActiveElement = null;
+
 // Modal functions
 export function showModal(content) {
     const overlay = document.getElementById('modal-overlay');
     const modalContent = document.getElementById('modal-content');
     
     if (overlay && modalContent) {
+        // Store the currently focused element
+        previousActiveElement = document.activeElement;
+        
         modalContent.innerHTML = content;
         overlay.classList.add('active');
+        overlay.setAttribute('aria-hidden', 'false');
+        
+        // Set modal title for aria-labelledby
+        const modalTitle = modalContent.querySelector('h3');
+        if (modalTitle && !modalTitle.id) {
+            modalTitle.id = 'modal-title';
+            overlay.setAttribute('aria-labelledby', 'modal-title');
+        }
+        
+        // Focus the first focusable element in the modal
+        setTimeout(() => {
+            const firstFocusable = overlay.querySelector('button:not(.modal-close), [href], input, select, textarea, [tabindex]:not([tabindex="-1"])');
+            if (firstFocusable) {
+                firstFocusable.focus();
+            } else {
+                // If no focusable element, focus the modal itself
+                overlay.focus();
+            }
+        }, 100);
+        
+        // Trap focus within modal
+        trapFocus(overlay);
     }
 }
 
@@ -375,7 +446,67 @@ export function closeModal() {
     const overlay = document.getElementById('modal-overlay');
     if (overlay) {
         overlay.classList.remove('active');
+        overlay.setAttribute('aria-hidden', 'true');
+        
+        // Remove focus trap handler
+        if (focusTrapHandler) {
+            overlay.removeEventListener('keydown', focusTrapHandler);
+            focusTrapHandler = null;
+        }
+        
+        // Return focus to the element that opened the modal
+        if (previousActiveElement) {
+            previousActiveElement.focus();
+            previousActiveElement = null;
+        }
     }
+}
+
+// Focus trap for modal
+let focusTrapHandler = null;
+
+function trapFocus(modal) {
+    // Remove previous handler if exists
+    if (focusTrapHandler) {
+        modal.removeEventListener('keydown', focusTrapHandler);
+    }
+    
+    const focusableElements = modal.querySelectorAll('button:not([disabled]), [href], input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])');
+    const firstFocusable = focusableElements[0];
+    const lastFocusable = focusableElements[focusableElements.length - 1];
+    
+    focusTrapHandler = function handleTab(e) {
+        if (e.key === 'Escape') {
+            e.preventDefault();
+            closeModal();
+            return;
+        }
+        
+        if (e.key !== 'Tab') {
+            return;
+        }
+        
+        if (focusableElements.length === 0) {
+            e.preventDefault();
+            return;
+        }
+        
+        if (e.shiftKey) {
+            // Shift + Tab
+            if (document.activeElement === firstFocusable) {
+                e.preventDefault();
+                lastFocusable?.focus();
+            }
+        } else {
+            // Tab
+            if (document.activeElement === lastFocusable) {
+                e.preventDefault();
+                firstFocusable?.focus();
+            }
+        }
+    };
+    
+    modal.addEventListener('keydown', focusTrapHandler);
 }
 
 // Make closeModal available globally for onclick handlers
@@ -389,8 +520,13 @@ export function showToast(message, type = 'success') {
     const toast = document.createElement('div');
     toast.className = `toast ${type}`;
     toast.textContent = message;
+    toast.setAttribute('role', 'alert');
+    toast.setAttribute('aria-live', type === 'error' ? 'assertive' : 'polite');
     
     container.appendChild(toast);
+    
+    // Announce to screen reader
+    announceToScreenReader(message);
     
     setTimeout(() => {
         toast.style.animation = 'slideIn 0.3s ease reverse';
