@@ -439,6 +439,92 @@ export function setButtonLoading(button, isLoading) {
     }
 }
 
+// Helper function to show delete confirmation with dependency warnings
+export async function showDeleteConfirmation(itemType, itemName, canDeleteCheck, onConfirm) {
+    try {
+        const checkResult = await canDeleteCheck();
+        
+        if (!checkResult.can_delete) {
+            // Show warning dialog with dependency details
+            let warningMessage = `<p><strong>Cannot delete ${itemType}: "${escapeHtml(itemName)}"</strong></p>`;
+            warningMessage += '<p style="color: var(--danger-color); margin-top: 1rem;">This item cannot be deleted because it has dependencies:</p>';
+            
+            if (itemType === 'medication') {
+                // For medications, check for all assignments (active and inactive) and inventory
+                const assignments = checkResult.assignments || checkResult.active_assignments || [];
+                const hasInventory = checkResult.has_inventory || false;
+                
+                if (assignments.length > 0) {
+                    const activeCount = assignments.filter(a => a.active === true).length;
+                    const inactiveCount = assignments.length - activeCount;
+                    
+                    warningMessage += '<ul style="margin: 1rem 0; padding-left: 1.5rem;">';
+                    assignments.forEach(assignment => {
+                        const status = assignment.active === false ? ' (inactive)' : '';
+                        warningMessage += `<li>Assigned to: <strong>${escapeHtml(assignment.family_member_name)}${status}</strong></li>`;
+                    });
+                    warningMessage += '</ul>';
+                    
+                    if (inactiveCount > 0) {
+                        warningMessage += `<p><em>This medication has ${assignments.length} assignment(s) (${activeCount} active, ${inactiveCount} inactive). Please remove all assignments before deleting.</em></p>`;
+                    } else {
+                        warningMessage += '<p><em>Please remove or deactivate these assignments before deleting.</em></p>';
+                    }
+                }
+                
+                if (hasInventory) {
+                    if (assignments.length > 0) {
+                        warningMessage += '<p style="margin-top: 1rem;"><strong>This medication also has inventory records.</strong></p>';
+                    } else {
+                        warningMessage += '<p style="margin-top: 1rem;"><strong>This medication has inventory records.</strong></p>';
+                    }
+                    warningMessage += '<p><em>Please delete the inventory record before deleting the medication.</em></p>';
+                }
+            } else if (checkResult.active_assignments && checkResult.active_assignments.length > 0) {
+                // For family members, show active assignments
+                warningMessage += '<ul style="margin: 1rem 0; padding-left: 1.5rem;">';
+                checkResult.active_assignments.forEach(assignment => {
+                    warningMessage += `<li>Medication: <strong>${escapeHtml(assignment.medication_name)}</strong></li>`;
+                });
+                warningMessage += '</ul>';
+                warningMessage += '<p><em>Please remove or deactivate these assignments before deleting.</em></p>';
+            } else if (checkResult.administration_count !== undefined && checkResult.administration_count > 0) {
+                warningMessage += `<p><strong>${checkResult.administration_count} administration record(s)</strong> have been recorded for this caregiver.</p>`;
+                warningMessage += '<p><em>Cannot delete caregiver with recorded administrations.</em></p>';
+            }
+            
+            const content = `
+                <h3>Cannot Delete ${itemType.charAt(0).toUpperCase() + itemType.slice(1)}</h3>
+                <div class="alert alert-danger" style="margin: 1rem 0;">
+                    ${warningMessage}
+                </div>
+                <div class="form-actions">
+                    <button type="button" class="btn btn-secondary" onclick="closeModal()">Close</button>
+                </div>
+            `;
+            
+            showModal(content);
+            return false;
+        }
+        
+        // No dependencies, show standard confirmation
+        const confirmMessage = `Are you sure you want to delete ${itemType} "${itemName}"?`;
+        if (confirm(confirmMessage)) {
+            // Execute onConfirm without catching errors here - let the callback handle them
+            // The callback will show appropriate error messages and handle the error
+            await onConfirm();
+            return true;
+        }
+        return false;
+    } catch (error) {
+        // Only catch errors from canDeleteCheck, not from onConfirm
+        // onConfirm errors are already handled by the callbacks and should not be re-thrown
+        showToast(`Failed to check deletion status: ${error.message}`, 'error');
+        console.error(error);
+        return false;
+    }
+}
+
 function escapeHtml(text) {
     if (!text) return '';
     const div = document.createElement('div');

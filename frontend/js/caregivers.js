@@ -1,6 +1,6 @@
 /** Caregiver management */
 import { caregiversAPI } from './api.js';
-import { showToast, showModal, closeModal, setButtonLoading } from './app.js';
+import { showToast, showModal, closeModal, setButtonLoading, showDeleteConfirmation } from './app.js';
 
 let caregivers = [];
 
@@ -89,19 +89,26 @@ export function showAddCaregiverForm() {
 }
 
 window.deleteCaregiver = async function(id) {
-    if (!confirm('Are you sure you want to remove this caregiver?')) {
-        return;
-    }
+    const caregiver = caregivers.find(c => c.id === id);
+    if (!caregiver) return;
     
-    try {
-        await caregiversAPI.delete(id);
-        showToast('Caregiver removed', 'success');
-        await loadCaregivers();
-    } catch (error) {
-        const errorMsg = error.message || 'Failed to remove caregiver';
-        showToast(errorMsg, 'error');
-        console.error(error);
-    }
+    const confirmed = await showDeleteConfirmation(
+        'caregiver',
+        caregiver.name,
+        () => caregiversAPI.canDelete(id),
+        async () => {
+            try {
+                await caregiversAPI.delete(id);
+                showToast('Caregiver removed', 'success');
+                await loadCaregivers();
+            } catch (error) {
+                const errorMsg = error.message || 'Failed to remove caregiver';
+                showToast(errorMsg, 'error');
+                console.error(error);
+                // Don't re-throw - error is already handled and displayed
+            }
+        }
+    );
 };
 
 function escapeHtml(text) {

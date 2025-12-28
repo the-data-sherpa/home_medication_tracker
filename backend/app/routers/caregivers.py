@@ -40,12 +40,44 @@ def update_caregiver(caregiver_id: int, caregiver: schemas.CaregiverUpdate, db: 
     return db_caregiver
 
 
+@router.get("/{caregiver_id}/can-delete")
+def can_delete_caregiver(caregiver_id: int, db: Session = Depends(get_db)):
+    """Check if a caregiver can be deleted (no recorded administrations)."""
+    db_caregiver = db.query(models.Caregiver).filter(models.Caregiver.id == caregiver_id).first()
+    if not db_caregiver:
+        raise HTTPException(status_code=404, detail="Caregiver not found")
+    
+    # Check for recorded administrations
+    administration_count = db.query(models.Administration).filter(
+        models.Administration.caregiver_id == caregiver_id
+    ).count()
+    
+    return {
+        "can_delete": administration_count == 0,
+        "administration_count": administration_count
+    }
+
+
 @router.delete("/{caregiver_id}", status_code=204)
 def delete_caregiver(caregiver_id: int, db: Session = Depends(get_db)):
     """Delete (deactivate) a caregiver."""
     db_caregiver = db.query(models.Caregiver).filter(models.Caregiver.id == caregiver_id).first()
     if not db_caregiver:
         raise HTTPException(status_code=404, detail="Caregiver not found")
+    
+    # Check for recorded administrations
+    administrations = db.query(models.Administration).filter(
+        models.Administration.caregiver_id == caregiver_id
+    ).count()
+    
+    if administrations > 0:
+        raise HTTPException(
+            status_code=400,
+            detail={
+                "message": "Cannot delete caregiver with recorded administrations",
+                "administration_count": administrations
+            }
+        )
     
     db_caregiver.active = False
     db.commit()
