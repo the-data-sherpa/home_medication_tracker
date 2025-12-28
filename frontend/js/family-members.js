@@ -29,7 +29,21 @@ function renderFamilyMembers() {
     if (!container) return;
 
     if (familyMembers.length === 0) {
-        container.innerHTML = '<div class="empty-state"><p>No family members yet. Add one to get started!</p></div>';
+        container.innerHTML = `
+            <div class="empty-state">
+                <div style="font-size: 3rem; margin-bottom: 1rem; opacity: 0.3;">👨‍👩‍👧‍👦</div>
+                <h3 style="margin-bottom: 0.5rem; color: var(--text-color);">No Family Members</h3>
+                <p style="color: #666; margin-bottom: 1.5rem; max-width: 500px; margin-left: auto; margin-right: auto;">
+                    Add family members who need medications. You'll need at least one family member before you can assign medications.
+                </p>
+                <button class="btn btn-primary" id="empty-state-add-family-btn">Add Family Member</button>
+            </div>
+        `;
+        // Set up the add button handler
+        const addBtn = container.querySelector('#empty-state-add-family-btn');
+        if (addBtn) {
+            addBtn.addEventListener('click', () => showAddFamilyMemberForm());
+        }
         return;
     }
 

@@ -132,7 +132,17 @@ async function loadHistory() {
         const administrations = await administrationsAPI.getAll(params);
         
         if (administrations.length === 0) {
-            container.innerHTML = '<div class="empty-state"><p>No administration records found.</p></div>';
+            container.innerHTML = `
+                <div class="empty-state">
+                    <div style="font-size: 3rem; margin-bottom: 1rem; opacity: 0.3;">📋</div>
+                    <h3 style="margin-bottom: 0.5rem; color: var(--text-color);">No Administration Records</h3>
+                    <p style="color: #666; margin-bottom: 1.5rem; max-width: 500px; margin-left: auto; margin-right: auto;">
+                        ${Object.keys(params).length > 0 
+                            ? 'No records match your current filters. Try adjusting your filters or select different dates.' 
+                            : 'When you record medication administrations from the dashboard, they will appear here with full history and details.'}
+                    </p>
+                </div>
+            `;
             return;
         }
         

@@ -2,7 +2,7 @@
 import { assignmentsAPI } from './api.js';
 import { getAssignmentStatus, formatTimeUntilNext, startStatusTimer, stopStatusTimer, showGiveMedicationForm } from './administrations.js';
 import { showToast } from './app.js';
-import { showEditAssignmentForm, showStopAssignmentDialog } from './assignments.js';
+import { showEditAssignmentForm, showStopAssignmentDialog, showAssignMedicationForm } from './assignments.js';
 
 let assignments = [];
 
@@ -31,7 +31,21 @@ async function renderDashboard() {
     if (!container) return;
 
     if (assignments.length === 0) {
-        container.innerHTML = '<div class="empty-state"><p>No active medication assignments. Assign medications to family members to get started!</p></div>';
+        container.innerHTML = `
+            <div class="empty-state">
+                <div style="font-size: 3rem; margin-bottom: 1rem; opacity: 0.3;">💊</div>
+                <h3 style="margin-bottom: 0.5rem; color: var(--text-color);">No Active Medication Assignments</h3>
+                <p style="color: #666; margin-bottom: 1.5rem; max-width: 500px; margin-left: auto; margin-right: auto;">
+                    Get started by assigning medications to family members. Once assigned, you'll see medication status, timing information, and be able to record administrations here.
+                </p>
+                <button class="btn btn-primary" id="empty-state-assign-btn">Assign Medication</button>
+            </div>
+        `;
+        // Set up the assign button handler
+        const assignBtn = container.querySelector('#empty-state-assign-btn');
+        if (assignBtn) {
+            assignBtn.addEventListener('click', () => showAssignMedicationForm());
+        }
         return;
     }
 
