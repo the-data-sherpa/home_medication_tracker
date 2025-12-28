@@ -4,7 +4,7 @@ import { loadCaregivers } from './caregivers.js';
 import { loadMedications } from './medications.js';
 import { loadDashboard } from './dashboard.js';
 import { loadInventory } from './inventory.js';
-import { showAssignMedicationForm } from './assignments.js';
+import { showAssignMedicationForm, loadInactiveAssignments } from './assignments.js';
 import { administrationsAPI } from './api.js';
 import { setupExportHandlers } from './export.js';
 import { stopAllTimers } from './administrations.js';
@@ -94,9 +94,10 @@ function switchView(viewName) {
             loadHistory();
             break;
         case 'settings':
-            // Load both caregivers and inventory when settings view is opened
+            // Load caregivers, inventory, and inactive assignments when settings view is opened
             loadCaregivers();
             loadInventory();
+            loadInactiveAssignments();
             break;
     }
 }
