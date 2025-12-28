@@ -70,15 +70,27 @@
                 <h2>Settings</h2>
                 
                 <div class="settings-section">
+                    <h3>Appearance</h3>
+                    <p style="color: var(--text-secondary);">Customize the look and feel of the application.</p>
+                    <div class="theme-toggle-container" style="display: flex; align-items: center; justify-content: space-between; margin-top: 1rem; padding: 0.75rem 0;">
+                        <label for="theme-toggle" style="font-weight: 500; cursor: pointer; flex: 1;">Dark Mode</label>
+                        <label class="toggle-switch">
+                            <input type="checkbox" id="theme-toggle" aria-label="Toggle dark mode">
+                            <span class="toggle-slider"></span>
+                        </label>
+                    </div>
+                </div>
+                
+                <div class="settings-section">
                     <h3>Caregivers</h3>
-                    <p style="color: #666;">Manage caregivers who can administer medications.</p>
+                    <p style="color: var(--text-secondary);">Manage caregivers who can administer medications.</p>
                     <button class="btn btn-primary" id="add-caregiver-btn">Add Caregiver</button>
                     <div id="caregivers-list" class="list-container" style="margin-top: 1rem;"></div>
                 </div>
                 
                 <div class="settings-section">
                     <h3>Medication Inventory</h3>
-                    <p style="color: #666;">Track medication quantities and receive low-stock alerts.</p>
+                    <p style="color: var(--text-secondary);">Track medication quantities and receive low-stock alerts.</p>
                     <button class="btn btn-primary" id="add-inventory-btn">Add Inventory</button>
                     <div id="low-stock-alerts" class="alerts" style="margin-top: 1rem;"></div>
                     <div id="inventory-list" class="list-container" style="margin-top: 1rem;"></div>
@@ -86,7 +98,7 @@
                 
                 <div class="settings-section">
                     <h3>Inactive Assignments</h3>
-                    <p style="color: #666;">View and reactivate stopped medication assignments.</p>
+                    <p style="color: var(--text-secondary);">View and reactivate stopped medication assignments.</p>
                     <div id="inactive-assignments-list" class="list-container" style="margin-top: 1rem;"></div>
                 </div>
                 

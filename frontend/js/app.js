@@ -535,8 +535,32 @@ function escapeHtml(text) {
     return div.innerHTML;
 }
 
+// Theme Management
+function initTheme() {
+    const savedTheme = localStorage.getItem('theme') || 'light';
+    document.documentElement.setAttribute('data-theme', savedTheme);
+    updateThemeToggle(savedTheme);
+}
+
+function toggleTheme() {
+    const themeToggle = document.getElementById('theme-toggle');
+    if (themeToggle) {
+        const newTheme = themeToggle.checked ? 'dark' : 'light';
+        document.documentElement.setAttribute('data-theme', newTheme);
+        localStorage.setItem('theme', newTheme);
+    }
+}
+
+function updateThemeToggle(theme) {
+    const themeToggle = document.getElementById('theme-toggle');
+    if (themeToggle) {
+        themeToggle.checked = theme === 'dark';
+    }
+}
+
 // Initialize app
 document.addEventListener('DOMContentLoaded', () => {
+    initTheme();
     setupNavigation();
     setupExportHandlers();
     setupHamburgerMenu();
@@ -576,9 +600,18 @@ document.addEventListener('DOMContentLoaded', () => {
         dashboardView.insertBefore(assignBtn, dashboardView.querySelector('#assignments-list'));
     }
     
+    // Setup theme toggle switch
+    const themeToggle = document.getElementById('theme-toggle');
+    if (themeToggle) {
+        themeToggle.addEventListener('change', toggleTheme);
+    }
+    
     // Load initial view
     switchView('dashboard');
 });
+
+// Make theme functions available globally
+window.toggleTheme = toggleTheme;
 
 // Cleanup on page unload
 window.addEventListener('beforeunload', () => {
