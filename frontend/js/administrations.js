@@ -29,6 +29,46 @@ export async function recordAdministration(assignmentId, dose, notes = null, car
     }
 }
 
+/**
+ * Quick give medication - records administration with default dose, current time, and last used caregiver
+ */
+export async function quickGiveMedication(assignment) {
+    try {
+        // Get the default dose
+        const dose = assignment.current_dose || assignment.medication.default_dose;
+        
+        // Get last used caregiver for this assignment
+        let lastCaregiverId = null;
+        try {
+            const recentAdmins = await administrationsAPI.getAll({ 
+                assignment_id: assignment.id,
+                limit: 1 
+            });
+            if (recentAdmins && recentAdmins.length > 0 && recentAdmins[0].caregiver_id) {
+                lastCaregiverId = recentAdmins[0].caregiver_id;
+            }
+        } catch (error) {
+            console.warn('Could not fetch last caregiver, continuing without it', error);
+        }
+        
+        // Record with current time (no custom time = uses current time)
+        const success = await recordAdministration(
+            assignment.id,
+            dose,
+            null, // No notes for quick give
+            lastCaregiverId,
+            null  // null = current time
+        );
+        
+        return success;
+    } catch (error) {
+        const errorMsg = error.message || 'Failed to quick give medication';
+        showToast(errorMsg, 'error');
+        console.error(error);
+        return false;
+    }
+}
+
 export async function getAssignmentStatus(assignmentId) {
     try {
         return await assignmentsAPI.getStatus(assignmentId);

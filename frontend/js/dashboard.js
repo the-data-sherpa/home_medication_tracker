@@ -1,10 +1,11 @@
 /** Dashboard view with medication assignments and status */
 import { assignmentsAPI } from './api.js';
-import { getAssignmentStatus, formatTimeUntilNext, startStatusTimer, stopStatusTimer, showGiveMedicationForm } from './administrations.js';
+import { getAssignmentStatus, formatTimeUntilNext, startStatusTimer, stopStatusTimer, showGiveMedicationForm, quickGiveMedication } from './administrations.js';
 import { showToast } from './app.js';
 import { showEditAssignmentForm, showStopAssignmentDialog, showAssignMedicationForm } from './assignments.js';
 
 let assignments = [];
+let quickGiveMode = {}; // Track quick give mode per assignment (defaults to true)
 
 export async function loadDashboard() {
     const container = document.getElementById('assignments-list');
@@ -128,12 +129,19 @@ async function renderDashboard() {
                     ${timerText}
                 </div>
                 <div class="card-footer">
-                    <button class="btn btn-success btn-small" onclick="giveMedication(${assignment.id})" ${!canGive ? 'disabled' : ''}>
-                        Give Medication
-                    </button>
-                    <button class="btn btn-secondary btn-small" onclick="viewHistory(${assignment.id})">History</button>
-                    <button class="btn btn-primary btn-small" onclick="editAssignment(${assignment.id})">Edit</button>
-                    <button class="btn btn-danger btn-small" onclick="stopAssignment(${assignment.id})">Stop Assignment</button>
+                    <div class="give-medication-control" style="display: flex; align-items: center; gap: 0.5rem; flex: 1;">
+                        <label class="quick-give-toggle" style="display: flex; align-items: center; gap: 0.5rem; cursor: pointer; user-select: none;">
+                            <input type="checkbox" id="quick-give-toggle-${assignment.id}" ${quickGiveMode[assignment.id] !== false ? 'checked' : ''} onchange="toggleQuickGiveMode(${assignment.id})" aria-label="Toggle quick give mode">
+                            <span class="toggle-slider-small"></span>
+                            <span style="font-size: 0.85rem; color: var(--text-secondary);">Quick</span>
+                        </label>
+                        <button class="btn btn-success btn-small" onclick="giveMedicationWithMode(${assignment.id})" ${!canGive ? 'disabled' : ''} style="flex: 1;" aria-label="Give medication">
+                            ${quickGiveMode[assignment.id] !== false ? 'Quick Give' : 'Give Medication'}
+                        </button>
+                    </div>
+                    <button class="btn btn-secondary btn-small" onclick="viewHistory(${assignment.id})" aria-label="View administration history">History</button>
+                    <button class="btn btn-primary btn-small" onclick="editAssignment(${assignment.id})" aria-label="Edit assignment">Edit</button>
+                    <button class="btn btn-danger btn-small" onclick="stopAssignment(${assignment.id})" aria-label="Stop assignment">Stop Assignment</button>
                 </div>
             </div>
         `;
@@ -201,6 +209,52 @@ window.giveMedication = async function(assignmentId) {
     const assignment = assignments.find(a => a.id === assignmentId);
     if (!assignment) return;
     await showGiveMedicationForm(assignment);
+};
+
+window.toggleQuickGiveMode = function(assignmentId) {
+    const toggle = document.getElementById(`quick-give-toggle-${assignmentId}`);
+    if (toggle) {
+        quickGiveMode[assignmentId] = toggle.checked;
+        // Update button text
+        const button = toggle.closest('.give-medication-control')?.querySelector('.btn-success');
+        if (button) {
+            button.textContent = toggle.checked ? 'Quick Give' : 'Give Medication';
+        }
+    }
+};
+
+window.giveMedicationWithMode = async function(assignmentId) {
+    const assignment = assignments.find(a => a.id === assignmentId);
+    if (!assignment) {
+        showToast('Assignment not found', 'error');
+        return;
+    }
+    
+    // Check if medication can be given
+    const status = await getAssignmentStatus(assignmentId);
+    if (!status || !status.can_administer) {
+        showToast('Medication is not ready to be given yet', 'error');
+        return;
+    }
+    
+    // Use quick give if mode is enabled (defaults to true if not set)
+    if (quickGiveMode[assignmentId] !== false) {
+        const success = await quickGiveMedication(assignment);
+        if (success) {
+            // Reload dashboard to update status
+            if (window.loadDashboard) {
+                await window.loadDashboard();
+            }
+        }
+    } else {
+        // Use regular form
+        await showGiveMedicationForm(assignment);
+    }
+};
+
+window.quickGive = async function(assignmentId) {
+    // Legacy function for backwards compatibility
+    await window.giveMedicationWithMode(assignmentId);
 };
 
 window.viewHistory = async function(assignmentId) {
