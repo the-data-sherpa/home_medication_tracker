@@ -520,7 +520,7 @@ Use this section to track implementation status:
 | Quick Give | FEAT-007 | Medium | Completed | Branch: `feature/FEAT-007-quick-give` |
 | Inventory Auto-Decrement | FEAT-008 | Medium | Pending | |
 | Browser Notifications | FEAT-009 | Medium | Pending | |
-| Error Recovery | FEAT-010 | Medium | Pending | |
+| Error Recovery | FEAT-010 | Medium | Completed | Branch: `feature/FEAT-010-error-recovery` |
 | History View Enhancements | FEAT-011 | Medium | Pending | |
 | Form Improvements | FEAT-012 | Medium | Completed | Branch: `feature/FEAT-012-form-improvements` |
 | Dark Mode | FEAT-013 | Low | Completed | Branch: `feature/FEAT-013-dark-mode` |

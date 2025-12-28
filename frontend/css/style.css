@@ -697,6 +697,18 @@ h2 {
     animation: slideIn 0.3s ease;
 }
 
+.toast-message {
+    margin-bottom: 0.5rem;
+}
+
+.toast-action {
+    margin-top: 0.5rem;
+    font-size: 0.85rem;
+    opacity: 0.9;
+    font-style: italic;
+    color: var(--text-secondary);
+}
+
 .toast.success {
     border-left-color: var(--success-color);
 }

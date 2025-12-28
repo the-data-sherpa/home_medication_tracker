@@ -21,7 +21,9 @@ export async function loadDashboard() {
         if (container) {
             container.innerHTML = '<div class="empty-state"><p>Failed to load dashboard. Please try again.</p></div>';
         }
-        showToast('Failed to load dashboard', 'error');
+        const errorMsg = error.actionableMessage || error.message || 'Failed to load dashboard';
+        const actionStep = error.actionableStep || 'Please try again.';
+        showToast(errorMsg, 'error', actionStep);
         console.error(error);
         return [];
     }

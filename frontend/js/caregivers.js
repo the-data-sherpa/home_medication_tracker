@@ -18,7 +18,9 @@ export async function loadCaregivers() {
         if (container) {
             container.innerHTML = '<div class="empty-state"><p>Failed to load caregivers. Please try again.</p></div>';
         }
-        showToast('Failed to load caregivers', 'error');
+        const errorMsg = error.actionableMessage || error.message || 'Failed to load caregivers';
+        const actionStep = error.actionableStep || 'Please try again.';
+        showToast(errorMsg, 'error', actionStep);
         console.error(error);
         return [];
     }
@@ -110,8 +112,9 @@ export function showAddCaregiverForm() {
             closeModal();
             await loadCaregivers();
         } catch (error) {
-            const errorMsg = error.message || 'Failed to add caregiver';
-            showToast(errorMsg, 'error');
+            const errorMsg = error.actionableMessage || error.message || 'Failed to add caregiver';
+            const actionStep = error.actionableStep || 'Please try again.';
+            showToast(errorMsg, 'error', actionStep);
             console.error(error);
         } finally {
             setButtonLoading(submitButton, false);

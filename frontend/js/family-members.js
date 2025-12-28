@@ -18,7 +18,9 @@ export async function loadFamilyMembers() {
         if (container) {
             container.innerHTML = '<div class="empty-state"><p>Failed to load family members. Please try again.</p></div>';
         }
-        showToast('Failed to load family members', 'error');
+        const errorMsg = error.actionableMessage || error.message || 'Failed to load family members';
+        const actionStep = error.actionableStep || 'Please try again.';
+        showToast(errorMsg, 'error', actionStep);
         console.error(error);
         return [];
     }
@@ -114,8 +116,9 @@ export function showAddFamilyMemberForm() {
                 await window.loadDashboard();
             }
         } catch (error) {
-            const errorMsg = error.message || 'Failed to add family member';
-            showToast(errorMsg, 'error');
+            const errorMsg = error.actionableMessage || error.message || 'Failed to add family member';
+            const actionStep = error.actionableStep || 'Please try again.';
+            showToast(errorMsg, 'error', actionStep);
             console.error(error);
         } finally {
             setButtonLoading(submitButton, false);

@@ -8,6 +8,7 @@ import { showAssignMedicationForm, loadInactiveAssignments } from './assignments
 import { administrationsAPI } from './api.js';
 import { setupExportHandlers } from './export.js';
 import { stopAllTimers } from './administrations.js';
+import { getNetworkStatus, onNetworkStatusChange } from './api.js';
 
 // Make functions available globally
 window.loadDashboard = loadDashboard;
@@ -547,26 +548,65 @@ function trapFocus(modal) {
 // Make closeModal available globally for onclick handlers
 window.closeModal = closeModal;
 
-// Toast notifications
-export function showToast(message, type = 'success') {
+// Network status indicator management
+function initNetworkStatusIndicator() {
+    const statusEl = document.getElementById('network-status');
+    const iconEl = document.getElementById('network-status-icon');
+    const textEl = document.getElementById('network-status-text');
+    
+    if (!statusEl || !iconEl || !textEl) return;
+    
+    function updateNetworkIndicator(online) {
+        if (online) {
+            statusEl.classList.remove('offline');
+            textEl.textContent = 'Online';
+            statusEl.setAttribute('aria-label', 'Network status: Online');
+        } else {
+            statusEl.classList.add('offline');
+            textEl.textContent = 'Offline';
+            statusEl.setAttribute('aria-label', 'Network status: Offline');
+        }
+    }
+    
+    // Initialize with current status
+    updateNetworkIndicator(getNetworkStatus());
+    
+    // Listen for network status changes
+    onNetworkStatusChange(updateNetworkIndicator);
+}
+
+// Toast notifications with enhanced error messages
+export function showToast(message, type = 'success', actionableStep = null) {
     const container = document.getElementById('toast-container');
     if (!container) return;
     
     const toast = document.createElement('div');
     toast.className = `toast ${type}`;
-    toast.textContent = message;
     toast.setAttribute('role', 'alert');
     toast.setAttribute('aria-live', type === 'error' ? 'assertive' : 'polite');
+    toast.setAttribute('aria-atomic', 'true');
+    
+    let content = `<div class="toast-message">${escapeHtml(message)}</div>`;
+    
+    // Add actionable step for errors
+    if (type === 'error' && actionableStep) {
+        content += `<div class="toast-action">${escapeHtml(actionableStep)}</div>`;
+    }
+    
+    toast.innerHTML = content;
     
     container.appendChild(toast);
     
     // Announce to screen reader
-    announceToScreenReader(message);
+    const fullMessage = actionableStep ? `${message}. ${actionableStep}` : message;
+    announceToScreenReader(fullMessage);
     
+    // Auto-remove after delay (longer for errors with actionable steps)
+    const delay = (type === 'error' && actionableStep) ? 8000 : (type === 'error' ? 6000 : 4000);
     setTimeout(() => {
         toast.style.animation = 'slideIn 0.3s ease reverse';
         setTimeout(() => toast.remove(), 300);
-    }, 3000);
+    }, delay);
 }
 
 // Loading overlay functions
@@ -787,6 +827,7 @@ function updateThemeToggle(theme) {
 // Initialize app
 document.addEventListener('DOMContentLoaded', () => {
     initTheme();
+    initNetworkStatusIndicator();
     setupNavigation();
     setupExportHandlers();
     setupHamburgerMenu();

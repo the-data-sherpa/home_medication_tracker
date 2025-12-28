@@ -279,8 +279,9 @@ export async function showAssignMedicationForm() {
                         }
                     }
                 } else {
-                    const errorMsg = error.message || 'Failed to assign medication';
-                    showToast(errorMsg, 'error');
+                    const errorMsg = error.actionableMessage || error.message || 'Failed to assign medication';
+                    const actionStep = error.actionableStep || 'Please try again.';
+                    showToast(errorMsg, 'error', actionStep);
                     console.error(error);
                 }
             } finally {

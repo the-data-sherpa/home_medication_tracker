@@ -156,8 +156,9 @@ export function showAddInventoryForm() {
             closeModal();
             await loadInventory();
         } catch (error) {
-            const errorMsg = error.message || 'Failed to add inventory';
-            showToast(errorMsg, 'error');
+            const errorMsg = error.actionableMessage || error.message || 'Failed to add inventory';
+            const actionStep = error.actionableStep || 'Please try again.';
+            showToast(errorMsg, 'error', actionStep);
             console.error(error);
         } finally {
             setButtonLoading(submitButton, false);

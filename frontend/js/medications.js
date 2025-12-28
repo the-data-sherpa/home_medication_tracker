@@ -173,7 +173,9 @@ export function showAddMedicationForm() {
             closeModal();
             await loadMedications();
         } catch (error) {
-            showToast('Failed to add medication', 'error');
+            const errorMsg = error.actionableMessage || error.message || 'Failed to add medication';
+            const actionStep = error.actionableStep || 'Please try again.';
+            showToast(errorMsg, 'error', actionStep);
             console.error(error);
         } finally {
             setButtonLoading(submitButton, false);

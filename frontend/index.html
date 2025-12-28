@@ -43,11 +43,17 @@
         <header>
             <div class="header-top">
                 <h1>Medication Tracker</h1>
-                <button class="hamburger-btn" id="hamburger-btn" aria-label="Toggle menu" aria-expanded="false" aria-controls="main-nav">
-                    <span aria-hidden="true"></span>
-                    <span aria-hidden="true"></span>
-                    <span aria-hidden="true"></span>
-                </button>
+                <div style="display: flex; align-items: center; gap: 1rem;">
+                    <div id="network-status" class="network-status" role="status" aria-live="polite" aria-atomic="true">
+                        <span class="network-status-icon" id="network-status-icon"></span>
+                        <span class="network-status-text" id="network-status-text">Online</span>
+                    </div>
+                    <button class="hamburger-btn" id="hamburger-btn" aria-label="Toggle menu" aria-expanded="false" aria-controls="main-nav">
+                        <span aria-hidden="true"></span>
+                        <span aria-hidden="true"></span>
+                        <span aria-hidden="true"></span>
+                    </button>
+                </div>
             </div>
             <nav class="main-nav" id="main-nav" role="navigation" aria-label="Main navigation">
                 <button class="nav-btn active" data-view="dashboard" aria-current="page">Dashboard</button>
