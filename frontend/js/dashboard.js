@@ -2,6 +2,7 @@
 import { assignmentsAPI } from './api.js';
 import { getAssignmentStatus, formatTimeUntilNext, startStatusTimer, stopStatusTimer, showGiveMedicationForm } from './administrations.js';
 import { showToast } from './app.js';
+import { showEditAssignmentForm } from './assignments.js';
 
 let assignments = [];
 
@@ -117,6 +118,7 @@ async function renderDashboard() {
                         Give Medication
                     </button>
                     <button class="btn btn-secondary btn-small" onclick="viewHistory(${assignment.id})">History</button>
+                    <button class="btn btn-primary btn-small" onclick="editAssignment(${assignment.id})">Edit</button>
                 </div>
             </div>
         `;
@@ -205,6 +207,15 @@ window.viewHistory = async function(assignmentId) {
             await window.loadHistory();
         }
     }
+};
+
+window.editAssignment = async function(assignmentId) {
+    const assignment = assignments.find(a => a.id === assignmentId);
+    if (!assignment) {
+        showToast('Assignment not found', 'error');
+        return;
+    }
+    await showEditAssignmentForm(assignment);
 };
 
 function escapeHtml(text) {

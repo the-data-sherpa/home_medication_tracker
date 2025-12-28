@@ -249,6 +249,288 @@ export async function showAssignMedicationForm() {
     }
 }
 
+export async function showEditAssignmentForm(assignment) {
+    try {
+        // Fetch full assignment details and edit history
+        const [fullAssignment, editHistory] = await Promise.all([
+            assignmentsAPI.get(assignment.id),
+            assignmentsAPI.getEditHistory(assignment.id).catch(() => []) // Gracefully handle if endpoint doesn't exist yet
+        ]);
+        
+        // Determine current frequency override state
+        const hasRangeOverride = fullAssignment.frequency_min_hours && fullAssignment.frequency_max_hours;
+        const hasFixedOverride = fullAssignment.frequency_hours !== null && fullAssignment.frequency_hours !== undefined;
+        const freqTypeOverride = hasRangeOverride ? 'range' : (hasFixedOverride ? 'fixed' : '');
+        
+        // Get medication defaults for display
+        const medication = fullAssignment.medication;
+        const medFreqType = (medication.default_frequency_min_hours && medication.default_frequency_max_hours) ? 'range' : 'fixed';
+        const medFreqValue = medFreqType === 'range' 
+            ? `${medication.default_frequency_min_hours}-${medication.default_frequency_max_hours}`
+            : medication.default_frequency_hours;
+        
+        // Pre-fill schedule days if weekly
+        let scheduleDaysChecked = [];
+        if (fullAssignment.schedule_type === 'weekly' && fullAssignment.schedule_days) {
+            scheduleDaysChecked = fullAssignment.schedule_days.split(',');
+        }
+        
+        const content = `
+            <h3>Edit Assignment</h3>
+            <form id="edit-assignment-form">
+                <div class="form-group">
+                    <label for="edit-family">Family Member</label>
+                    <select id="edit-family" disabled>
+                        <option value="${fullAssignment.family_member.id}" selected>${escapeHtml(fullAssignment.family_member.name)}</option>
+                    </select>
+                    <small style="display: block; margin-top: 0.25rem; color: #666;">Family member cannot be changed</small>
+                </div>
+                <div class="form-group">
+                    <label for="edit-medication">Medication</label>
+                    <select id="edit-medication" disabled>
+                        <option value="${fullAssignment.medication.id}" selected>${escapeHtml(fullAssignment.medication.name)}</option>
+                    </select>
+                    <small style="display: block; margin-top: 0.25rem; color: #666;">Medication cannot be changed</small>
+                </div>
+                <div class="form-group">
+                    <label for="edit-dose">Dose (leave empty to use default)</label>
+                    <input type="text" id="edit-dose" placeholder="e.g., 2.5mL" value="${(fullAssignment.current_dose || '').replace(/"/g, '&quot;')}">
+                </div>
+                <div class="form-group">
+                    <label for="edit-frequency-type">Frequency Override (leave empty to use default)</label>
+                    <select id="edit-frequency-type">
+                        <option value="">Use medication default (${medFreqValue} hours)</option>
+                        <option value="fixed" ${freqTypeOverride === 'fixed' ? 'selected' : ''}>Fixed (e.g., every 4 hours)</option>
+                        <option value="range" ${freqTypeOverride === 'range' ? 'selected' : ''}>Range (e.g., every 4-6 hours)</option>
+                    </select>
+                </div>
+                <div class="form-group" id="edit-frequency-fixed-group" style="display: ${freqTypeOverride === 'fixed' ? 'block' : 'none'};">
+                    <label for="edit-frequency">Frequency in hours</label>
+                    <input type="number" id="edit-frequency" step="0.5" min="0.5" placeholder="e.g., 4" value="${fullAssignment.frequency_hours ?? ''}">
+                </div>
+                <div class="form-group" id="edit-frequency-range-group" style="display: ${freqTypeOverride === 'range' ? 'block' : 'none'};">
+                    <label for="edit-frequency-min">Minimum Frequency (hours)</label>
+                    <input type="number" id="edit-frequency-min" step="0.5" min="0.5" placeholder="e.g., 4" value="${fullAssignment.frequency_min_hours || ''}">
+                    <label for="edit-frequency-max" style="margin-top: 0.5rem;">Maximum Frequency (hours)</label>
+                    <input type="number" id="edit-frequency-max" step="0.5" min="0.5" placeholder="e.g., 6" value="${fullAssignment.frequency_max_hours || ''}">
+                </div>
+                <div class="form-group">
+                    <label for="edit-schedule-type">Schedule Type</label>
+                    <select id="edit-schedule-type">
+                        <option value="">None</option>
+                        <option value="daily" ${fullAssignment.schedule_type === 'daily' ? 'selected' : ''}>Daily</option>
+                        <option value="weekly" ${fullAssignment.schedule_type === 'weekly' ? 'selected' : ''}>Weekly</option>
+                    </select>
+                </div>
+                <div class="form-group" id="edit-schedule-time-group" style="display: ${fullAssignment.schedule_type ? 'block' : 'none'};">
+                    <label for="edit-schedule-time">Time</label>
+                    <input type="time" id="edit-schedule-time" value="${fullAssignment.schedule_time ?? ''}">
+                </div>
+                <div class="form-group" id="edit-schedule-days-group" style="display: ${fullAssignment.schedule_type === 'weekly' ? 'block' : 'none'};">
+                    <label>Days of Week</label>
+                    <div>
+                        ${['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'].map(day => {
+                            const dayLower = day.toLowerCase();
+                            const isChecked = scheduleDaysChecked.includes(dayLower);
+                            return `
+                                <label style="display: block; margin: 0.25rem 0;">
+                                    <input type="checkbox" value="${dayLower}" class="edit-schedule-day-checkbox" ${isChecked ? 'checked' : ''}>
+                                    ${day}
+                                </label>
+                            `;
+                        }).join('')}
+                    </div>
+                </div>
+                <div class="form-actions">
+                    <button type="submit" class="btn btn-primary">Update Assignment</button>
+                    <button type="button" class="btn btn-secondary" onclick="closeModal()">Cancel</button>
+                </div>
+            </form>
+            ${editHistory && editHistory.length > 0 ? `
+                <div style="margin-top: 2rem; padding-top: 1.5rem; border-top: 1px solid #ddd;">
+                    <h4 style="margin-bottom: 1rem; cursor: pointer;" onclick="toggleEditHistory()">
+                        Edit History <span id="edit-history-toggle" style="font-size: 0.8em; color: #666;">▼</span>
+                    </h4>
+                    <div id="edit-history-content" style="display: none;">
+                        <div style="max-height: 300px; overflow-y: auto;">
+                            ${editHistory.map(log => {
+                                const changeDate = new Date(log.changed_at);
+                                const fieldDisplayName = formatFieldName(log.field_name);
+                                const oldVal = log.old_value || '(empty)';
+                                const newVal = log.new_value || '(empty)';
+                                return `
+                                    <div style="padding: 0.75rem; margin-bottom: 0.5rem; background: #f5f5f5; border-radius: 4px; border-left: 3px solid #007bff;">
+                                        <div style="font-weight: bold; margin-bottom: 0.25rem;">${escapeHtml(fieldDisplayName)}</div>
+                                        <div style="font-size: 0.9em; color: #666;">
+                                            <div><strong>From:</strong> ${escapeHtml(oldVal)}</div>
+                                            <div><strong>To:</strong> ${escapeHtml(newVal)}</div>
+                                            <div style="margin-top: 0.25rem; font-size: 0.85em; color: #999;">
+                                                ${changeDate.toLocaleString()}
+                                            </div>
+                                        </div>
+                                    </div>
+                                `;
+                            }).join('')}
+                        </div>
+                    </div>
+                </div>
+            ` : ''}
+        `;
+        
+        showModal(content);
+        
+        // Set up event listeners
+        const freqTypeSelect = document.getElementById('edit-frequency-type');
+        const fixedGroup = document.getElementById('edit-frequency-fixed-group');
+        const rangeGroup = document.getElementById('edit-frequency-range-group');
+        
+        freqTypeSelect.addEventListener('change', (e) => {
+            if (e.target.value === 'fixed') {
+                fixedGroup.style.display = 'block';
+                rangeGroup.style.display = 'none';
+            } else if (e.target.value === 'range') {
+                fixedGroup.style.display = 'none';
+                rangeGroup.style.display = 'block';
+            } else {
+                fixedGroup.style.display = 'none';
+                rangeGroup.style.display = 'none';
+            }
+        });
+        
+        // Show/hide schedule fields
+        const scheduleType = document.getElementById('edit-schedule-type');
+        const timeGroup = document.getElementById('edit-schedule-time-group');
+        const daysGroup = document.getElementById('edit-schedule-days-group');
+        
+        scheduleType.addEventListener('change', (e) => {
+            if (e.target.value === 'daily') {
+                timeGroup.style.display = 'block';
+                daysGroup.style.display = 'none';
+            } else if (e.target.value === 'weekly') {
+                timeGroup.style.display = 'block';
+                daysGroup.style.display = 'block';
+            } else {
+                timeGroup.style.display = 'none';
+                daysGroup.style.display = 'none';
+            }
+        });
+        
+        document.getElementById('edit-assignment-form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const submitButton = e.target.querySelector('button[type="submit"]');
+            setButtonLoading(submitButton, true);
+            
+            try {
+                const dose = document.getElementById('edit-dose').value.trim() || null;
+                const freqTypeOverride = document.getElementById('edit-frequency-type').value;
+                const scheduleType = document.getElementById('edit-schedule-type').value || null;
+                const scheduleTime = document.getElementById('edit-schedule-time').value || null;
+                
+                let scheduleDays = null;
+                if (scheduleType === 'weekly') {
+                    const checked = Array.from(document.querySelectorAll('.edit-schedule-day-checkbox:checked')).map(cb => cb.value);
+                    scheduleDays = checked.length > 0 ? checked.join(',') : null;
+                }
+                
+                const data = {
+                    current_dose: dose,
+                    schedule_type: scheduleType,
+                    schedule_time: scheduleTime,
+                    schedule_days: scheduleDays
+                };
+                
+                // Handle frequency override
+                if (freqTypeOverride === 'fixed') {
+                    const freq = document.getElementById('edit-frequency').value;
+                    if (freq) {
+                        const freqValue = parseFloat(freq);
+                        if (freqValue <= 0) {
+                            showToast('Frequency must be greater than 0', 'error');
+                            setButtonLoading(submitButton, false);
+                            return;
+                        }
+                        data.frequency_hours = freqValue;
+                    }
+                    data.frequency_min_hours = null;
+                    data.frequency_max_hours = null;
+                } else if (freqTypeOverride === 'range') {
+                    const minFreq = document.getElementById('edit-frequency-min').value;
+                    const maxFreq = document.getElementById('edit-frequency-max').value;
+                    if (minFreq && maxFreq) {
+                        const minValue = parseFloat(minFreq);
+                        const maxValue = parseFloat(maxFreq);
+                        if (minValue <= 0 || maxValue <= 0) {
+                            showToast('Frequencies must be greater than 0', 'error');
+                            setButtonLoading(submitButton, false);
+                            return;
+                        }
+                        if (minValue >= maxValue) {
+                            showToast('Minimum frequency must be less than maximum', 'error');
+                            setButtonLoading(submitButton, false);
+                            return;
+                        }
+                        data.frequency_min_hours = minValue;
+                        data.frequency_max_hours = maxValue;
+                    }
+                    data.frequency_hours = null;
+                } else {
+                    // Use medication default - clear frequency fields
+                    data.frequency_hours = null;
+                    data.frequency_min_hours = null;
+                    data.frequency_max_hours = null;
+                }
+                
+                await assignmentsAPI.update(fullAssignment.id, data);
+                showToast('Assignment updated successfully', 'success');
+                closeModal();
+                if (window.loadDashboard) {
+                    await window.loadDashboard();
+                }
+            } catch (error) {
+                const errorMsg = error.message || 'Failed to update assignment';
+                showToast(errorMsg, 'error');
+                console.error(error);
+            } finally {
+                setButtonLoading(submitButton, false);
+            }
+        });
+        
+        // Set up edit history toggle
+        if (editHistory && editHistory.length > 0) {
+            window.toggleEditHistory = function() {
+                const content = document.getElementById('edit-history-content');
+                const toggle = document.getElementById('edit-history-toggle');
+                if (content && toggle) {
+                    if (content.style.display === 'none') {
+                        content.style.display = 'block';
+                        toggle.textContent = '▲';
+                    } else {
+                        content.style.display = 'none';
+                        toggle.textContent = '▼';
+                    }
+                }
+            };
+        }
+    } catch (error) {
+        showToast('Failed to load assignment details', 'error');
+        console.error(error);
+    }
+}
+
+function formatFieldName(fieldName) {
+    const fieldMap = {
+        'current_dose': 'Dose',
+        'frequency_hours': 'Frequency (Fixed)',
+        'frequency_min_hours': 'Frequency Min (Range)',
+        'frequency_max_hours': 'Frequency Max (Range)',
+        'schedule_type': 'Schedule Type',
+        'schedule_time': 'Schedule Time',
+        'schedule_days': 'Schedule Days',
+        'active': 'Active Status'
+    };
+    return fieldMap[fieldName] || fieldName.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
+}
+
 function escapeHtml(text) {
     if (!text) return '';
     const div = document.createElement('div');

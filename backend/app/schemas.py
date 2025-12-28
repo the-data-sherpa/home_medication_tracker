@@ -158,8 +158,22 @@ class MedicationAssignmentUpdate(BaseModel):
 class MedicationAssignment(MedicationAssignmentBase):
     id: int
     created_at: datetime
+    updated_at: Optional[datetime] = None
     family_member: FamilyMember
     medication: Medication
+
+    class Config:
+        from_attributes = True
+
+
+class AssignmentAuditLog(BaseModel):
+    """Audit log entry for assignment changes."""
+    id: int
+    assignment_id: int
+    field_name: str
+    old_value: Optional[str] = None
+    new_value: Optional[str] = None
+    changed_at: datetime
 
     class Config:
         from_attributes = True
