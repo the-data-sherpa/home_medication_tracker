@@ -426,14 +426,24 @@ export function showModal(content) {
             overlay.setAttribute('aria-labelledby', 'modal-title');
         }
         
-        // Focus the first focusable element in the modal
+        // Auto-focus first input field in the modal (prefer input/select/textarea over buttons)
         setTimeout(() => {
-            const firstFocusable = overlay.querySelector('button:not(.modal-close), [href], input, select, textarea, [tabindex]:not([tabindex="-1"])');
-            if (firstFocusable) {
-                firstFocusable.focus();
+            // First try to find an input, select, or textarea
+            const firstInput = overlay.querySelector('input:not([type="hidden"]):not([type="checkbox"]):not([type="radio"]), select, textarea');
+            if (firstInput) {
+                firstInput.focus();
+                // If it's a text input, select the text if it has a value
+                if (firstInput.type === 'text' && firstInput.value) {
+                    firstInput.select();
+                }
             } else {
-                // If no focusable element, focus the modal itself
-                overlay.focus();
+                // Fallback to any focusable element
+                const firstFocusable = overlay.querySelector('button:not(.modal-close), [href], [tabindex]:not([tabindex="-1"])');
+                if (firstFocusable) {
+                    firstFocusable.focus();
+                } else {
+                    overlay.focus();
+                }
             }
         }, 100);
         
@@ -476,10 +486,35 @@ function trapFocus(modal) {
     const lastFocusable = focusableElements[focusableElements.length - 1];
     
     focusTrapHandler = function handleTab(e) {
+        // Escape key closes modal
         if (e.key === 'Escape') {
             e.preventDefault();
             closeModal();
             return;
+        }
+        
+        // Enter key submits form if focus is on an input/select/textarea (not already in a form submit handler)
+        if (e.key === 'Enter' && !e.shiftKey) {
+            const activeElement = document.activeElement;
+            if (activeElement && (activeElement.tagName === 'INPUT' || activeElement.tagName === 'SELECT' || activeElement.tagName === 'TEXTAREA')) {
+                // Don't submit if it's a textarea (allow Enter for new lines)
+                if (activeElement.tagName === 'TEXTAREA') {
+                    return; // Allow Enter in textarea
+                }
+                
+                // Find the form containing this element
+                const form = activeElement.closest('form');
+                if (form) {
+                    e.preventDefault();
+                    const submitButton = form.querySelector('button[type="submit"]');
+                    if (submitButton && !submitButton.disabled) {
+                        submitButton.click();
+                    } else {
+                        form.requestSubmit();
+                    }
+                    return;
+                }
+            }
         }
         
         if (e.key !== 'Tab') {
@@ -575,6 +610,61 @@ export function setButtonLoading(button, isLoading) {
     } else {
         button.disabled = false;
         button.classList.remove('btn-loading');
+    }
+}
+
+// Helper function to show inline validation message
+export function showValidationMessage(input, message, isValid = false) {
+    // Remove existing validation message
+    const existing = input.parentElement.querySelector('.validation-message');
+    if (existing) {
+        existing.remove();
+    }
+    
+    if (message) {
+        const messageEl = document.createElement('span');
+        messageEl.className = `validation-message ${isValid ? 'success' : ''}`;
+        messageEl.textContent = message;
+        input.parentElement.appendChild(messageEl);
+        
+        // Update input styling
+        if (isValid) {
+            input.classList.remove('invalid');
+            input.classList.add('valid');
+        } else {
+            input.classList.add('invalid');
+            input.classList.remove('valid');
+        }
+    } else {
+        input.classList.remove('invalid', 'valid');
+    }
+}
+
+// Helper function to validate form field
+export function validateField(input) {
+    if (!input) return true;
+    
+    // Check HTML5 validation
+    if (!input.checkValidity()) {
+        let message = '';
+        if (input.validity.valueMissing) {
+            message = 'This field is required';
+        } else if (input.validity.typeMismatch) {
+            message = 'Please enter a valid value';
+        } else if (input.validity.rangeUnderflow) {
+            message = `Value must be at least ${input.min}`;
+        } else if (input.validity.rangeOverflow) {
+            message = `Value must be at most ${input.max}`;
+        } else if (input.validity.stepMismatch) {
+            message = `Value must be a multiple of ${input.step}`;
+        } else {
+            message = 'Please enter a valid value';
+        }
+        showValidationMessage(input, message, false);
+        return false;
+    } else {
+        showValidationMessage(input, '', true);
+        return true;
     }
 }
 

@@ -1,6 +1,6 @@
 /** Caregiver management */
 import { caregiversAPI } from './api.js';
-import { showToast, showModal, closeModal, setButtonLoading, showDeleteConfirmation } from './app.js';
+import { showToast, showModal, closeModal, setButtonLoading, showDeleteConfirmation, validateField, showValidationMessage } from './app.js';
 
 let caregivers = [];
 
@@ -76,10 +76,27 @@ export function showAddCaregiverForm() {
     
     showModal(content);
     
+    // Add validation
+    const nameInput = document.getElementById('caregiver-name');
+    if (nameInput) {
+        nameInput.addEventListener('blur', () => validateField(nameInput));
+        nameInput.addEventListener('input', () => {
+            if (nameInput.validity.valid) {
+                showValidationMessage(nameInput, '', true);
+            }
+        });
+    }
+    
     document.getElementById('add-caregiver-form').addEventListener('submit', async (e) => {
         e.preventDefault();
         const submitButton = e.target.querySelector('button[type="submit"]');
         const name = document.getElementById('caregiver-name').value.trim();
+        
+        // Validate before submitting
+        if (!validateField(nameInput)) {
+            nameInput.focus();
+            return;
+        }
         
         if (!name) {
             showToast('Please enter a name', 'error');

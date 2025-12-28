@@ -266,18 +266,28 @@ Each recommendation has been assigned a feature number (FEAT-001 through FEAT-02
 **Feature #**: FEAT-012  
 **Category**: UI/UX  
 **Impact**: Medium  
-**Effort**: Low
+**Effort**: Low  
+**Status**: Completed
 
-- Auto-focus first input when modals open
-- Add keyboard shortcuts (Enter to submit, Esc to close)
-- Show character limits for text fields if needed
-- Add inline validation messages
-- Pre-fill medication dose when selecting medication in assignment form
+- ✅ Auto-focus first input when modals open (improved to focus first input/select/textarea, selects text if pre-filled)
+- ✅ Added keyboard shortcuts:
+  - Enter key submits form (when focus is on input/select, not textarea)
+  - Escape key closes modal (already existed, now documented)
+- ✅ Added inline validation messages with visual feedback
+- ✅ Added real-time validation on blur events
+- ✅ Pre-fill medication dose when selecting medication in assignment form (now actually fills the field, not just placeholder)
+- ✅ Form validation prevents submission with invalid fields
+- ✅ First invalid field is focused when validation fails
 
-**Files to Modify**:
-- `frontend/js/app.js` - Add modal focus management
-- `frontend/js/assignments.js` - Add auto-fill logic
-- All form files - Add keyboard shortcuts
+**Files Modified**:
+- `frontend/js/app.js` - Enhanced modal focus management, added keyboard shortcuts (Enter to submit), added validation helper functions
+- `frontend/js/assignments.js` - Pre-fills dose field when medication is selected
+- `frontend/js/medications.js` - Added real-time validation
+- `frontend/js/family-members.js` - Added validation imports
+- `frontend/js/caregivers.js` - Added validation imports
+- `frontend/js/inventory.js` - Added validation imports
+- `frontend/js/administrations.js` - Added validation imports
+- `frontend/css/style.css` - Added validation styles (invalid/valid states, validation messages)
 
 ---
 
@@ -512,7 +522,7 @@ Use this section to track implementation status:
 | Browser Notifications | FEAT-009 | Medium | Pending | |
 | Error Recovery | FEAT-010 | Medium | Pending | |
 | History View Enhancements | FEAT-011 | Medium | Pending | |
-| Form Improvements | FEAT-012 | Medium | Pending | |
+| Form Improvements | FEAT-012 | Medium | Completed | Branch: `feature/FEAT-012-form-improvements` |
 | Dark Mode | FEAT-013 | Low | Completed | Branch: `feature/FEAT-013-dark-mode` |
 | Advanced Reporting | FEAT-014 | Low | Pending | |
 | Swipe Gestures (Mobile) | FEAT-015 | Low | Pending | |
