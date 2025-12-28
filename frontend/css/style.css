@@ -17,6 +17,45 @@
     --text-color: #333;
     --border-color: #ddd;
     --shadow: 0 2px 4px rgba(0,0,0,0.1);
+    --text-secondary: #666;
+    --modal-overlay-bg: rgba(0,0,0,0.5);
+    --loading-overlay-bg: rgba(255, 255, 255, 0.9);
+    --skeleton-bg-start: #f0f0f0;
+    --skeleton-bg-end: #e0e0e0;
+    --spinner-border: rgba(0, 0, 0, 0.1);
+    --alert-warning-bg: #fff3cd;
+    --alert-warning-text: #856404;
+    --alert-danger-bg: #f8d7da;
+    --alert-danger-text: #721c24;
+    --btn-primary-hover: #357abd;
+    --btn-secondary-hover: #6a5acd;
+    --btn-success-hover: #218838;
+}
+
+[data-theme="dark"] {
+    --primary-color: #5ba0f2;
+    --secondary-color: #8b78fe;
+    --success-color: #38b855;
+    --warning-color: #ffd127;
+    --danger-color: #ec4555;
+    --bg-color: #1a1a1a;
+    --card-bg: #2d2d2d;
+    --text-color: #e0e0e0;
+    --border-color: #404040;
+    --shadow: 0 2px 4px rgba(0,0,0,0.3);
+    --text-secondary: #b0b0b0;
+    --modal-overlay-bg: rgba(0,0,0,0.7);
+    --loading-overlay-bg: rgba(26, 26, 26, 0.95);
+    --skeleton-bg-start: #333;
+    --skeleton-bg-end: #404040;
+    --spinner-border: rgba(255, 255, 255, 0.1);
+    --alert-warning-bg: #4a3f1a;
+    --alert-warning-text: #ffd127;
+    --alert-danger-bg: #4a1f24;
+    --alert-danger-text: #ff6b7a;
+    --btn-primary-hover: #6baaf2;
+    --btn-secondary-hover: #9b88fe;
+    --btn-success-hover: #48c865;
 }
 
 body {
@@ -262,7 +301,7 @@ h2 {
 }
 
 .btn-primary:hover {
-    background: #357abd;
+    background: var(--btn-primary-hover);
 }
 
 .btn-secondary {
@@ -271,7 +310,7 @@ h2 {
 }
 
 .btn-secondary:hover {
-    background: #6a5acd;
+    background: var(--btn-secondary-hover);
 }
 
 .btn-danger {
@@ -285,11 +324,11 @@ h2 {
 }
 
 .btn-success:hover {
-    background: #218838;
+    background: var(--btn-success-hover);
 }
 
 .btn-success:disabled {
-    background: #6c757d;
+    background: var(--border-color);
     cursor: not-allowed;
     opacity: 0.6;
 }
@@ -312,17 +351,17 @@ h2 {
 }
 
 .status-ready {
-    background: #28a745;
+    background: var(--success-color);
     color: white;
 }
 
 .status-soon {
-    background: #ffc107;
-    color: #333;
+    background: var(--warning-color);
+    color: var(--text-color);
 }
 
 .status-overdue {
-    background: #dc3545;
+    background: var(--danger-color);
     color: white;
 }
 
@@ -534,15 +573,15 @@ h2 {
 }
 
 .alert-warning {
-    background: #fff3cd;
+    background: var(--alert-warning-bg);
     border-color: var(--warning-color);
-    color: #856404;
+    color: var(--alert-warning-text);
 }
 
 .alert-danger {
-    background: #f8d7da;
+    background: var(--alert-danger-bg);
     border-color: var(--danger-color);
-    color: #721c24;
+    color: var(--alert-danger-text);
 }
 
 /* Modal */
@@ -553,7 +592,7 @@ h2 {
     left: 0;
     right: 0;
     bottom: 0;
-    background: rgba(0,0,0,0.5);
+    background: var(--modal-overlay-bg);
     z-index: 1000;
     align-items: center;
     justify-content: center;
@@ -575,7 +614,7 @@ h2 {
     max-height: 90vh;
     overflow-y: auto;
     position: relative;
-    box-shadow: 0 4px 6px rgba(0,0,0,0.2);
+    box-shadow: var(--shadow);
     margin: auto;
     -webkit-overflow-scrolling: touch;
 }
@@ -588,7 +627,7 @@ h2 {
     border: none;
     font-size: 1.5rem;
     cursor: pointer;
-    color: #666;
+    color: var(--text-secondary);
     width: 44px;
     height: 44px;
     min-width: 44px;
@@ -722,7 +761,7 @@ h2 {
 
 /* Loading Spinner */
 .spinner {
-    border: 3px solid rgba(0, 0, 0, 0.1);
+    border: 3px solid var(--spinner-border);
     border-top: 3px solid var(--primary-color);
     border-radius: 50%;
     width: 40px;
@@ -750,7 +789,7 @@ h2 {
     left: 0;
     right: 0;
     bottom: 0;
-    background: rgba(255, 255, 255, 0.9);
+    background: var(--loading-overlay-bg);
     display: flex;
     align-items: center;
     justify-content: center;
@@ -766,7 +805,7 @@ h2 {
 
 /* Loading Skeleton */
 .loading-skeleton {
-    background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+    background: linear-gradient(90deg, var(--skeleton-bg-start) 25%, var(--skeleton-bg-end) 50%, var(--skeleton-bg-start) 75%);
     background-size: 200% 100%;
     animation: loading 1.5s ease-in-out infinite;
     border-radius: 4px;
@@ -835,7 +874,7 @@ h2 {
 .empty-state {
     text-align: center;
     padding: 3rem 2rem;
-    color: #666;
+    color: var(--text-secondary);
 }
 
 .empty-state h3 {
@@ -847,5 +886,68 @@ h2 {
 .empty-state p {
     margin-top: 0.5rem;
     line-height: 1.6;
+}
+
+/* Toggle Switch */
+.theme-toggle-container {
+    user-select: none;
+}
+
+.toggle-switch {
+    position: relative;
+    display: inline-block;
+    width: 52px;
+    height: 28px;
+    min-width: 52px;
+    min-height: 28px;
+    cursor: pointer;
+}
+
+.toggle-switch input {
+    opacity: 0;
+    width: 0;
+    height: 0;
+    position: absolute;
+}
+
+.toggle-slider {
+    position: absolute;
+    cursor: pointer;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: var(--border-color);
+    transition: 0.3s;
+    border-radius: 28px;
+}
+
+.toggle-slider:before {
+    position: absolute;
+    content: "";
+    height: 22px;
+    width: 22px;
+    left: 3px;
+    bottom: 3px;
+    background-color: white;
+    transition: 0.3s;
+    border-radius: 50%;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+}
+
+.toggle-switch input:checked + .toggle-slider {
+    background-color: var(--primary-color);
+}
+
+.toggle-switch input:checked + .toggle-slider:before {
+    transform: translateX(24px);
+}
+
+.toggle-switch input:focus + .toggle-slider {
+    box-shadow: 0 0 0 3px rgba(74, 144, 226, 0.2);
+}
+
+[data-theme="dark"] .toggle-switch input:focus + .toggle-slider {
+    box-shadow: 0 0 0 3px rgba(91, 160, 242, 0.3);
 }
 

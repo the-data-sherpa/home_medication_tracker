@@ -284,16 +284,19 @@ Each recommendation has been assigned a feature number (FEAT-001 through FEAT-02
 **Feature #**: FEAT-013  
 **Category**: Personalization  
 **Impact**: Low  
-**Effort**: Medium
+**Effort**: Medium  
+**Status**: Completed
 
-- Add theme toggle in settings
-- Implement dark mode CSS variables
-- Remember user preference
+- ✅ Added theme toggle button in Settings view
+- ✅ Implemented dark mode CSS variables using `[data-theme="dark"]` selector
+- ✅ Theme preference stored in localStorage and applied on page load
+- ✅ All color variables converted to support both light and dark themes
+- ✅ Dark theme includes proper contrast ratios for accessibility
 
-**Files to Modify**:
-- `frontend/css/style.css` - Add dark mode styles
-- `frontend/js/app.js` - Add theme toggle
-- `frontend/index.html` - Add theme toggle button
+**Files Modified**:
+- `frontend/css/style.css` - Added dark mode CSS variables and updated all color references
+- `frontend/js/app.js` - Added theme management functions (initTheme, toggleTheme, updateThemeButton)
+- `frontend/index.html` - Added "Appearance" settings section with theme toggle button
 
 ---
 
@@ -502,7 +505,7 @@ Use this section to track implementation status:
 | Error Recovery | FEAT-010 | Medium | Pending | |
 | History View Enhancements | FEAT-011 | Medium | Pending | |
 | Form Improvements | FEAT-012 | Medium | Pending | |
-| Dark Mode | FEAT-013 | Low | Pending | |
+| Dark Mode | FEAT-013 | Low | Completed | Branch: `feature/FEAT-013-dark-mode` |
 | Advanced Reporting | FEAT-014 | Low | Pending | |
 | Swipe Gestures (Mobile) | FEAT-015 | Low | Pending | |
 | Data Statistics Dashboard | FEAT-016 | Low | Pending | |
