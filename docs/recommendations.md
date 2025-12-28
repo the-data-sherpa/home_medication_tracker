@@ -78,15 +78,20 @@ Each recommendation has been assigned a feature number (FEAT-001 through FEAT-02
 **Feature #**: FEAT-004  
 **Category**: Data Integrity  
 **Impact**: High  
-**Effort**: Low
+**Effort**: Low  
+**Status**: Completed
 
-- Check for existing active assignment (same medication + family member) before creating
-- Show warning if duplicate detected
-- Option to reactivate existing assignment instead
+- ✅ Check for existing assignment (active or inactive) with same medication + family member before creating
+- ✅ Show dialog if duplicate/inactive assignment detected
+- ✅ Option to reactivate existing inactive assignment instead of creating new one
+- ✅ Option to use existing active assignment instead of creating duplicate
+- ✅ Enhanced error handling with HTTP 409 (Conflict) status code
+- ✅ Smart detection of both active duplicates and inactive assignments that can be reactivated
 
-**Files to Modify**:
-- `backend/app/routers/assignments.py` - Add duplicate check in create_assignment
-- `frontend/js/assignments.js` - Handle duplicate warning
+**Files Modified**:
+- `backend/app/routers/assignments.py` - Added duplicate check in create_assignment (checks both active and inactive)
+- `frontend/js/assignments.js` - Added duplicate dialog with reactivate option, enhanced error handling
+- `frontend/js/api.js` - Added status code to error objects for better error handling
 
 ---
 
@@ -94,22 +99,28 @@ Each recommendation has been assigned a feature number (FEAT-001 through FEAT-02
 **Feature #**: FEAT-004b  
 **Category**: Functionality  
 **Impact**: High  
-**Effort**: Low
+**Effort**: Low  
+**Status**: Completed
 
-- Add "Stop Assignment" or "Discontinue" button to dashboard assignment cards
-- Show confirmation dialog explaining that:
+- ✅ Add "Stop Assignment" button to dashboard assignment cards
+- ✅ Show confirmation dialog explaining that:
   - Assignment will be hidden from dashboard
   - All history will be preserved
   - Can be reactivated later if needed
-- Use existing `assignmentsAPI.delete()` endpoint (which soft-deletes by setting active=false)
-- Consider adding option to add end date/notes when stopping
+- ✅ Use existing `assignmentsAPI.delete()` endpoint (which soft-deletes by setting active=false)
+- ✅ Added "Inactive Assignments" section in Settings view with pagination
+- ✅ Compact card layout showing medication, family member, dose, and stopped date
+- ✅ Reactivate functionality with single-click button
+- ✅ Pagination (5 items per page) for better scalability
+- ✅ Sorted by most recently stopped first
 
-**Files to Modify**:
-- `frontend/js/dashboard.js` - Add "Stop Assignment" button
-- `frontend/js/assignments.js` - Add stop/discontinue confirmation dialog
-- `backend/app/routers/assignments.py` - Optionally add end_date field to assignment model
+**Files Modified**:
+- `frontend/js/dashboard.js` - Added "Stop Assignment" button
+- `frontend/js/assignments.js` - Added stop dialog, inactive assignments loading/rendering, pagination
+- `frontend/index.html` - Added inactive assignments section to Settings
+- `frontend/js/app.js` - Integrated inactive assignments loading into settings view
 
-**Rationale**: Currently no user-friendly way to stop medication assignments when child comes off medication. Backend supports it (soft delete), but no UI. This is a critical workflow gap.
+**Rationale**: Critical workflow gap - no user-friendly way to stop medication assignments when child comes off medication. Backend supports it (soft delete), but no UI. Now includes dedicated view for managing inactive assignments with easy reactivation.
 
 ---
 
@@ -474,8 +485,8 @@ Use this section to track implementation status:
 | Loading States | FEAT-001 | High | Completed | Branch: `feature/FEAT-001-loading-states` |
 | Delete Protection | FEAT-002 | High | Completed | Branch: `feature/FEAT-002-delete-protection` |
 | Edit Assignment | FEAT-003 | High | Completed | Branch: `feat/FEAT-003-edit-assignment` |
-| Duplicate Prevention | FEAT-004 | High | Completed | Branch: Current |
-| Stop/Discontinue Assignment | FEAT-004b | High | Completed | Branch: Current |
+| Duplicate Prevention | FEAT-004 | High | Completed | Branch: `feature/FEAT-004-assignment-protection` |
+| Stop/Discontinue Assignment | FEAT-004b | High | Completed | Branch: `feature/FEAT-004-assignment-protection` |
 | Enhanced Empty States | FEAT-005 | High | Pending | |
 | Search Functionality | FEAT-006 | Medium | Pending | |
 | Quick Give | FEAT-007 | Medium | Pending | |
@@ -499,6 +510,34 @@ Use this section to track implementation status:
 
 ---
 
-**Last Updated**: 2025-01-15  
+**Last Updated**: 2025-25-28  
 **Review Frequency**: Monthly or after major releases
+
+---
+
+## Recently Completed Features
+
+### FEAT-004 & FEAT-004b: Duplicate Prevention & Stop/Reactivate Assignments
+
+Completed implementation includes:
+
+**Duplicate Prevention (FEAT-004)**:
+- Backend checks for existing assignments (active or inactive) before creating new ones
+- Returns HTTP 409 (Conflict) with detailed information
+- Frontend shows dialog offering to reactivate inactive assignments or use existing active ones
+- Prevents data duplication while preserving history
+
+**Stop/Discontinue Assignment (FEAT-004b)**:
+- "Stop Assignment" button on dashboard cards
+- Confirmation dialog explaining what happens
+- Inactive assignments view in Settings with:
+  - Compact card layout
+  - Pagination (5 items per page)
+  - Sorted by most recently stopped first
+  - One-click reactivation
+  - View history link for each assignment
+- Seamless reactivation workflow
+- All administration history preserved
+
+This addresses the critical workflow gap where users had no way to manage stopped assignments.
 
