@@ -79,32 +79,49 @@ def update_medication(medication_id: int, medication: schemas.MedicationUpdate, 
 
 @router.get("/{medication_id}/can-delete")
 def can_delete_medication(medication_id: int, db: Session = Depends(get_db)):
-    """Check if a medication can be deleted (no active assignments)."""
+    """Check if a medication can be deleted (no assignments or inventory records)."""
     db_medication = db.query(models.Medication).filter(models.Medication.id == medication_id).first()
     if not db_medication:
         raise HTTPException(status_code=404, detail="Medication not found")
     
-    # Check for active assignments
-    active_assignments = db.query(models.MedicationAssignment).options(
+    # Check for ALL assignments (active and inactive) - database constraint prevents deletion if any exist
+    all_assignments = db.query(models.MedicationAssignment).options(
         joinedload(models.MedicationAssignment.family_member)
     ).filter(
-        models.MedicationAssignment.medication_id == medication_id,
-        models.MedicationAssignment.active == True
+        models.MedicationAssignment.medication_id == medication_id
     ).all()
     
     assignment_details = [
         {
             "id": assignment.id,
-            "family_member_name": assignment.family_member.name if assignment.family_member else "Unknown"
+            "family_member_name": assignment.family_member.name if assignment.family_member else "Unknown",
+            "active": assignment.active
         }
-        for assignment in active_assignments
+        for assignment in all_assignments
     ]
     
-    return {
-        "can_delete": len(active_assignments) == 0,
-        "active_assignments": assignment_details,
-        "count": len(active_assignments)
+    # Check for inventory records - database constraint prevents deletion if any exist
+    inventory = db.query(models.MedicationInventory).filter(
+        models.MedicationInventory.medication_id == medication_id
+    ).first()
+    
+    has_inventory = inventory is not None
+    
+    can_delete = len(all_assignments) == 0 and not has_inventory
+    
+    response = {
+        "can_delete": can_delete,
+        "assignments": assignment_details,
+        "assignment_count": len(all_assignments),
+        "has_inventory": has_inventory
     }
+    
+    # Keep backward compatibility with active_assignments for frontend
+    active_assignments = [a for a in assignment_details if a["active"]]
+    response["active_assignments"] = active_assignments
+    response["count"] = len(active_assignments)
+    
+    return response
 
 
 @router.delete("/{medication_id}", status_code=204)
@@ -114,30 +131,43 @@ def delete_medication(medication_id: int, db: Session = Depends(get_db)):
     if not db_medication:
         raise HTTPException(status_code=404, detail="Medication not found")
     
-    # Check for active assignments
-    active_assignments = db.query(models.MedicationAssignment).options(
+    # Check for ALL assignments (active and inactive) - database constraint prevents deletion if any exist
+    all_assignments = db.query(models.MedicationAssignment).options(
         joinedload(models.MedicationAssignment.family_member)
     ).filter(
-        models.MedicationAssignment.medication_id == medication_id,
-        models.MedicationAssignment.active == True
+        models.MedicationAssignment.medication_id == medication_id
     ).all()
     
-    if active_assignments:
+    # Check for inventory records - database constraint prevents deletion if any exist
+    inventory = db.query(models.MedicationInventory).filter(
+        models.MedicationInventory.medication_id == medication_id
+    ).first()
+    
+    # Build error details if deletion is blocked
+    if all_assignments or inventory:
         assignment_details = [
             {
                 "id": assignment.id,
-                "family_member_name": assignment.family_member.name if assignment.family_member else "Unknown"
+                "family_member_name": assignment.family_member.name if assignment.family_member else "Unknown",
+                "active": assignment.active
             }
-            for assignment in active_assignments
+            for assignment in all_assignments
         ]
-        raise HTTPException(
-            status_code=400,
-            detail={
-                "message": "Cannot delete medication with active assignments",
-                "active_assignments": assignment_details,
-                "count": len(active_assignments)
-            }
-        )
+        
+        error_details = {
+            "message": "Cannot delete medication with existing assignments or inventory records"
+        }
+        
+        if all_assignments:
+            error_details["assignments"] = assignment_details
+            error_details["assignment_count"] = len(all_assignments)
+            active_count = sum(1 for a in all_assignments if a.active)
+            error_details["active_assignment_count"] = active_count
+        
+        if inventory:
+            error_details["has_inventory"] = True
+        
+        raise HTTPException(status_code=400, detail=error_details)
     
     db.delete(db_medication)
     db.commit()
