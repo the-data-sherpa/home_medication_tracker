@@ -65,10 +65,12 @@ class MedicationAssignment(Base):
     schedule_time = Column(String, nullable=True)  # e.g., "08:00"
     schedule_days = Column(String, nullable=True)  # e.g., "monday,wednesday,friday"
     created_at = Column(DateTime(timezone=True), server_default=func.now())
+    updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now())
 
     family_member = relationship("FamilyMember", back_populates="assignments")
     medication = relationship("Medication", back_populates="assignments")
     administrations = relationship("Administration", back_populates="assignment", order_by="desc(Administration.administered_at)")
+    edit_history = relationship("AssignmentAuditLog", back_populates="assignment", order_by="desc(AssignmentAuditLog.changed_at)")
 
 
 class Administration(Base):
@@ -99,4 +101,18 @@ class MedicationInventory(Base):
     last_updated = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now())
 
     medication = relationship("Medication", back_populates="inventory")
+
+
+class AssignmentAuditLog(Base):
+    """Audit log for medication assignment changes."""
+    __tablename__ = "assignment_audit_logs"
+
+    id = Column(Integer, primary_key=True, index=True)
+    assignment_id = Column(Integer, ForeignKey("medication_assignments.id"), nullable=False, index=True)
+    field_name = Column(String, nullable=False)  # e.g., "current_dose", "frequency_hours"
+    old_value = Column(Text, nullable=True)  # Store as text for flexibility
+    new_value = Column(Text, nullable=True)
+    changed_at = Column(DateTime(timezone=True), server_default=func.now(), index=True)
+
+    assignment = relationship("MedicationAssignment", back_populates="edit_history")
 

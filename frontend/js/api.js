@@ -90,6 +90,7 @@ export const assignmentsAPI = {
     create: (data) => apiRequest('/assignments', { method: 'POST', body: data }),
     update: (id, data) => apiRequest(`/assignments/${id}`, { method: 'PUT', body: data }),
     delete: (id) => apiRequest(`/assignments/${id}`, { method: 'DELETE' }),
+    getEditHistory: (id) => apiRequest(`/assignments/${id}/edit-history`),
     getStatus: (id) => apiRequest(`/assignments/${id}/status`),
     getScheduled: () => apiRequest('/assignments/scheduled/list')
 };

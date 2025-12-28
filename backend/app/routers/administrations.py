@@ -3,7 +3,7 @@ from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 from sqlalchemy import desc
 from typing import List, Optional
-from datetime import datetime, timezone
+from datetime import datetime, timezone, timedelta
 from .. import models, schemas
 from ..database import get_db
 
@@ -76,11 +76,54 @@ def create_administration(administration: schemas.AdministrationCreate, db: Sess
         if not caregiver:
             raise HTTPException(status_code=404, detail="Caregiver not found")
     
-    # Create administration with current timestamp (UTC)
+    # Handle administered_at time (for backdating)
+    if administration.administered_at:
+        # Parse and validate the datetime
+        if isinstance(administration.administered_at, str):
+            # Parse ISO string - if it has timezone info, use it; otherwise assume UTC
+            dt_str = administration.administered_at
+            if dt_str.endswith('Z'):
+                dt_str = dt_str.replace('Z', '+00:00')
+            try:
+                dt = datetime.fromisoformat(dt_str)
+                # If no timezone info, assume it's UTC
+                if dt.tzinfo is None:
+                    dt = dt.replace(tzinfo=timezone.utc)
+                else:
+                    # Convert to UTC
+                    dt = dt.astimezone(timezone.utc)
+                administered_at = dt
+            except ValueError:
+                raise HTTPException(status_code=400, detail="Invalid datetime format")
+        else:
+            administered_at = administration.administered_at
+            # Ensure datetime is timezone-aware and in UTC
+            if administered_at.tzinfo is None:
+                administered_at = administered_at.replace(tzinfo=timezone.utc)
+            else:
+                administered_at = administered_at.astimezone(timezone.utc)
+        
+        # Validate not in future
+        now_utc = datetime.now(timezone.utc)
+        if administered_at > now_utc:
+            raise HTTPException(status_code=400, detail="Administration time cannot be in the future")
+        
+        # Validate not more than 24 hours in the past
+        max_backdate = timedelta(hours=24)
+        if administered_at < (now_utc - max_backdate):
+            raise HTTPException(
+                status_code=400, 
+                detail="Administration time cannot be more than 24 hours in the past"
+            )
+    else:
+        # Default to current time if not provided
+        administered_at = datetime.now(timezone.utc)
+    
+    # Create administration
     db_administration = models.Administration(
         medication_assignment_id=administration.medication_assignment_id,
         caregiver_id=administration.caregiver_id,
-        administered_at=datetime.now(timezone.utc),
+        administered_at=administered_at,
         dose_given=administration.dose_given,
         notes=administration.notes
     )
