@@ -450,7 +450,7 @@ Use this section to track implementation status:
 |----------------|-----------|----------|--------|-------|
 | Loading States | FEAT-001 | High | Completed | Branch: `feature/FEAT-001-loading-states` |
 | Delete Protection | FEAT-002 | High | Completed | Branch: `feature/FEAT-002-delete-protection` |
-| Edit Assignment | FEAT-003 | High | Pending | |
+| Edit Assignment | FEAT-003 | High | In Progress | Branch: `feat/FEAT-003-edit-assignment` |
 | Duplicate Prevention | FEAT-004 | High | Pending | |
 | Enhanced Empty States | FEAT-005 | High | Pending | |
 | Search Functionality | FEAT-006 | Medium | Pending | |
