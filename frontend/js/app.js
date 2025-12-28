@@ -175,17 +175,10 @@ async function loadHistory() {
                         const localTime = admin._localDate ? admin._localDate.toLocaleTimeString() : new Date(admin.administered_at).toLocaleTimeString();
                         return `
                         <div style="padding: 0.5rem 0; border-bottom: 1px solid #eee;">
-                            <div style="display: flex; justify-content: space-between; align-items: start;">
-                                <div style="flex: 1;">
-                                    <p><strong>${escapeHtml(medName)}</strong> - ${escapeHtml(memberName)}</p>
-                                    <p>Dose: ${escapeHtml(admin.dose_given)} at ${localTime}</p>
-                                    ${caregiverName ? `<p><em>Given by: ${escapeHtml(caregiverName)}</em></p>` : ''}
-                                    ${admin.notes ? `<p><em>${escapeHtml(admin.notes)}</em></p>` : ''}
-                                </div>
-                                <button class="btn btn-secondary btn-small" onclick="editAdministration(${admin.id})" style="margin-left: 0.5rem; min-width: auto; padding: 0.4rem 0.8rem;">
-                                    Edit
-                                </button>
-                            </div>
+                            <p><strong>${escapeHtml(medName)}</strong> - ${escapeHtml(memberName)}</p>
+                            <p>Dose: ${escapeHtml(admin.dose_given)} at ${localTime}</p>
+                            ${caregiverName ? `<p><em>Given by: ${escapeHtml(caregiverName)}</em></p>` : ''}
+                            ${admin.notes ? `<p><em>${escapeHtml(admin.notes)}</em></p>` : ''}
                         </div>
                         `;
                     }).join('')}

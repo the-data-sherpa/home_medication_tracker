@@ -98,8 +98,28 @@ def update_assignment(
             }
             schemas.MedicationAssignmentBase(**temp_data)
         
-        for field, value in update_data.items():
-            setattr(db_assignment, field, value)
+        # Track changes for audit log
+        audit_logs = []
+        for field, new_value in update_data.items():
+            old_value = getattr(db_assignment, field, None)
+            
+            # Convert values to strings for comparison and storage
+            old_str = str(old_value) if old_value is not None else None
+            new_str = str(new_value) if new_value is not None else None
+            
+            # Only log if value actually changed
+            if old_str != new_str:
+                audit_logs.append(models.AssignmentAuditLog(
+                    assignment_id=assignment_id,
+                    field_name=field,
+                    old_value=old_str,
+                    new_value=new_str
+                ))
+            setattr(db_assignment, field, new_value)
+        
+        # Save audit logs
+        if audit_logs:
+            db.add_all(audit_logs)
         
         db.commit()
         db.refresh(db_assignment)
@@ -270,4 +290,22 @@ def get_scheduled_assignments(db: Session = Depends(get_db)):
         models.MedicationAssignment.schedule_type.isnot(None),
         models.MedicationAssignment.active == True
     ).all()
+
+
+@router.get("/{assignment_id}/edit-history", response_model=List[schemas.AssignmentAuditLog])
+def get_assignment_edit_history(assignment_id: int, db: Session = Depends(get_db)):
+    """Get edit history for an assignment."""
+    # Verify assignment exists
+    db_assignment = db.query(models.MedicationAssignment).filter(
+        models.MedicationAssignment.id == assignment_id
+    ).first()
+    if not db_assignment:
+        raise HTTPException(status_code=404, detail="Assignment not found")
+    
+    # Get audit logs
+    audit_logs = db.query(models.AssignmentAuditLog).filter(
+        models.AssignmentAuditLog.assignment_id == assignment_id
+    ).order_by(models.AssignmentAuditLog.changed_at.desc()).all()
+    
+    return audit_logs
 
