@@ -1,0 +1,12 @@
+services:
+  app:
+    build: ./backend
+    ports:
+      - "8080:8000"
+    volumes:
+      - ./data:/app/data          # Persistent database storage
+      - ./frontend:/app/static    # Frontend static files
+    environment:
+      - DATABASE_PATH=/app/data/medications.db
+    restart: unless-stopped
+

@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Home Medication Tracker</title>
+    <link rel="stylesheet" href="/static/css/style.css">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <div class="header-top">
+                <h1>Medication Tracker</h1>
+                <button class="hamburger-btn" id="hamburger-btn" aria-label="Toggle menu">
+                    <span></span>
+                    <span></span>
+                    <span></span>
+                </button>
+            </div>
+            <nav class="main-nav" id="main-nav">
+                <button class="nav-btn active" data-view="dashboard">Dashboard</button>
+                <button class="nav-btn" data-view="medications">Medications</button>
+                <button class="nav-btn" data-view="family">Family</button>
+                <button class="nav-btn" data-view="caregivers">Caregivers</button>
+                <button class="nav-btn" data-view="history">History</button>
+                <button class="nav-btn" data-view="inventory">Inventory</button>
+                <button class="nav-btn" data-view="settings">Settings</button>
+            </nav>
+        </header>
+
+        <main>
+            <!-- Dashboard View -->
+            <div id="dashboard-view" class="view active">
+                <h2>Medication Dashboard</h2>
+                <div id="assignments-list" class="assignments-container"></div>
+            </div>
+
+            <!-- Medications View -->
+            <div id="medications-view" class="view">
+                <h2>Medications</h2>
+                <button class="btn btn-primary" id="add-medication-btn">Add Medication</button>
+                <div id="medications-list" class="list-container"></div>
+            </div>
+
+            <!-- Family Members View -->
+            <div id="family-view" class="view">
+                <h2>Family Members</h2>
+                <button class="btn btn-primary" id="add-family-btn">Add Family Member</button>
+                <div id="family-list" class="list-container"></div>
+            </div>
+
+            <!-- Caregivers View -->
+            <div id="caregivers-view" class="view">
+                <h2>Caregivers</h2>
+                <button class="btn btn-primary" id="add-caregiver-btn">Add Caregiver</button>
+                <div id="caregivers-list" class="list-container"></div>
+            </div>
+
+            <!-- History View -->
+            <div id="history-view" class="view">
+                <h2>Administration History</h2>
+                <div class="filters">
+                    <select id="history-family-filter">
+                        <option value="">All Family Members</option>
+                    </select>
+                    <select id="history-medication-filter">
+                        <option value="">All Medications</option>
+                    </select>
+                    <input type="date" id="history-start-date" placeholder="Start Date">
+                    <input type="date" id="history-end-date" placeholder="End Date">
+                    <button class="btn btn-secondary" id="history-filter-btn">Filter</button>
+                </div>
+                <div id="history-list" class="list-container"></div>
+            </div>
+
+            <!-- Inventory View -->
+            <div id="inventory-view" class="view">
+                <h2>Medication Inventory</h2>
+                <button class="btn btn-primary" id="add-inventory-btn">Add Inventory</button>
+                <div id="low-stock-alerts" class="alerts"></div>
+                <div id="inventory-list" class="list-container"></div>
+            </div>
+
+            <!-- Settings View -->
+            <div id="settings-view" class="view">
+                <h2>Settings & Backup</h2>
+                <div class="settings-section">
+                    <h3>Export Data</h3>
+                    <button class="btn btn-primary" id="export-json-btn">Export as JSON</button>
+                    <button class="btn btn-primary" id="export-csv-btn">Export as CSV</button>
+                </div>
+                <div class="settings-section">
+                    <h3>Import Data</h3>
+                    <input type="file" id="import-file" accept=".json" style="display: none;">
+                    <button class="btn btn-secondary" id="import-btn">Import from JSON</button>
+                </div>
+            </div>
+        </main>
+
+        <!-- Modals -->
+        <div id="modal-overlay" class="modal-overlay">
+            <div class="modal">
+                <button class="modal-close">&times;</button>
+                <div id="modal-content"></div>
+            </div>
+        </div>
+
+        <div id="toast-container" class="toast-container"></div>
+    </div>
+
+    <script type="module" src="/static/js/api.js"></script>
+    <script type="module" src="/static/js/family-members.js"></script>
+    <script type="module" src="/static/js/caregivers.js"></script>
+    <script type="module" src="/static/js/medications.js"></script>
+    <script type="module" src="/static/js/assignments.js"></script>
+    <script type="module" src="/static/js/administrations.js"></script>
+    <script type="module" src="/static/js/inventory.js"></script>
+    <script type="module" src="/static/js/dashboard.js"></script>
+    <script type="module" src="/static/js/export.js"></script>
+    <script type="module" src="/static/js/app.js"></script>
+</body>
+</html>
+
