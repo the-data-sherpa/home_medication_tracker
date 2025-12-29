@@ -5,6 +5,27 @@ All notable changes to the Home Medication Tracker project will be documented in
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.0.1] - 2025-01-28
+
+### 🎨 Mobile UI Improvements
+
+- **Compact Assignment Actions on Mobile** - Reduced button clutter on mobile devices by consolidating secondary actions (History, Edit, Stop Assignment) into a dropdown menu
+  - Primary "Give Medication" button remains prominent and easily accessible
+  - Secondary actions are now accessible via a "⋮" menu button on mobile
+  - Desktop layout unchanged - all buttons still visible as before
+  - Improved mobile screen space utilization
+  - Menu automatically closes when selecting an action or clicking outside
+  - Accessible with proper ARIA attributes and keyboard navigation
+
+### 🔧 Technical Changes
+
+- Enhanced card footer layout to use flexbox row on mobile (instead of column)
+- Added dropdown menu component with smooth animations
+- Improved touch targets for mobile interaction
+- Better responsive design for assignment action buttons
+
+---
+
 ## [1.0.0] - 2025-01-28
 
 ### 🎉 Initial Release
@@ -95,4 +116,5 @@ See [README.md](README.md) for installation and setup instructions.
 
 ---
 
+[1.0.1]: https://github.com/the-data-sherpa/home_medication_tracker/releases/tag/v1.0.1
 [1.0.0]: https://github.com/the-data-sherpa/home_medication_tracker/releases/tag/v1.0.0
