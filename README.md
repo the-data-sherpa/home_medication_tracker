@@ -1,6 +1,10 @@
 # Home Medication Tracker
 
+[![Version](https://img.shields.io/badge/version-1.0.0-blue.svg)](https://github.com/the-data-sherpa/home_medication_tracker/releases/tag/v1.0.0)
+
 A mobile-friendly web application for tracking home medications for family members. Built with FastAPI, SQLite, and vanilla JavaScript, containerized with Docker for easy deployment.
+
+> **Current Version**: 1.0.0 - See [CHANGELOG.md](CHANGELOG.md) for release notes and version history.
 
 ## 🎯 Overview
 
@@ -40,6 +44,11 @@ Home Medication Tracker helps families manage medications with features like:
 - **Touch-Optimized** - All buttons and controls meet mobile touch target guidelines
 - **Real-Time Updates** - Status timers update automatically
 - **Intuitive Interface** - Clean, modern design that's easy to use
+- **Dark Mode** - Full dark theme support with toggle in settings
+- **Accessibility** - ARIA labels, keyboard navigation, and screen reader support
+- **Error Recovery** - Automatic retry for failed requests with network status indicator
+- **Form Validation** - Inline validation with helpful error messages
+- **Quick Give** - One-click medication administration for routine doses
 
 ## 🚀 Quick Start
 
@@ -285,6 +294,10 @@ If port 8080 is already in use:
 
 This project is for personal/home use.
 
+## 📋 Changelog
+
+See [CHANGELOG.md](CHANGELOG.md) for a detailed list of changes, features, and version history.
+
 ## 🤝 Contributing
 
 This is a personal project, but suggestions and improvements are welcome!
@@ -292,6 +305,12 @@ This is a personal project, but suggestions and improvements are welcome!
 ## 📧 Support
 
 For issues or questions, please open an issue in the repository.
+
+## 🔗 Additional Documentation
+
+- [CHANGELOG.md](CHANGELOG.md) - Version history and release notes
+- [docs/recommendations.md](docs/recommendations.md) - Feature recommendations and roadmap
+- [docs/README.md](docs/README.md) - Documentation index
 
 ---
 

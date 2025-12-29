@@ -538,7 +538,17 @@ Use this section to track implementation status:
 
 ---
 
-**Last Updated**: 2025-25-28  
+## Release History
+
+- **v1.0.0** (2025-01-28) - Initial stable release
+  - All high-priority features completed (FEAT-001 through FEAT-005)
+  - Medium-priority features: FEAT-007, FEAT-010, FEAT-012, FEAT-018
+  - Low-priority features: FEAT-013 (Dark Mode)
+  - See [CHANGELOG.md](../CHANGELOG.md) for complete release notes
+
+---
+
+**Last Updated**: 2025-01-28  
 **Review Frequency**: Monthly or after major releases
 
 

@@ -141,9 +141,23 @@ async function renderDashboard() {
                             ${quickGiveMode[assignment.id] !== false ? 'Quick Give' : 'Give Medication'}
                         </button>
                     </div>
-                    <button class="btn btn-secondary btn-small" onclick="viewHistory(${assignment.id})" aria-label="View administration history">History</button>
-                    <button class="btn btn-primary btn-small" onclick="editAssignment(${assignment.id})" aria-label="Edit assignment">Edit</button>
-                    <button class="btn btn-danger btn-small" onclick="stopAssignment(${assignment.id})" aria-label="Stop assignment">Stop Assignment</button>
+                    <div class="assignment-actions-desktop">
+                        <button class="btn btn-secondary btn-small" onclick="viewHistory(${assignment.id})" aria-label="View administration history">History</button>
+                        <button class="btn btn-primary btn-small" onclick="editAssignment(${assignment.id})" aria-label="Edit assignment">Edit</button>
+                        <button class="btn btn-danger btn-small" onclick="stopAssignment(${assignment.id})" aria-label="Stop assignment">Stop Assignment</button>
+                    </div>
+                    <div class="assignment-actions-mobile">
+                        <div class="dropdown">
+                            <button class="btn btn-secondary btn-small dropdown-toggle" onclick="toggleAssignmentMenu(${assignment.id})" aria-label="More actions" aria-expanded="false" aria-haspopup="true">
+                                <span aria-hidden="true">⋮</span>
+                            </button>
+                            <div class="dropdown-menu" id="assignment-menu-${assignment.id}">
+                                <button class="dropdown-item" onclick="viewHistory(${assignment.id})" aria-label="View administration history">📋 History</button>
+                                <button class="dropdown-item" onclick="editAssignment(${assignment.id})" aria-label="Edit assignment">✏️ Edit</button>
+                                <button class="dropdown-item dropdown-item-danger" onclick="stopAssignment(${assignment.id})" aria-label="Stop assignment">⏸️ Stop Assignment</button>
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </div>
         `;
@@ -259,7 +273,52 @@ window.quickGive = async function(assignmentId) {
     await window.giveMedicationWithMode(assignmentId);
 };
 
+// Close menu helper
+function closeAssignmentMenu(assignmentId) {
+    const menu = document.getElementById(`assignment-menu-${assignmentId}`);
+    const button = document.querySelector(`[onclick="toggleAssignmentMenu(${assignmentId})"]`);
+    
+    if (menu) menu.classList.remove('show');
+    if (button) button.setAttribute('aria-expanded', 'false');
+}
+
+window.toggleAssignmentMenu = function(assignmentId) {
+    const menu = document.getElementById(`assignment-menu-${assignmentId}`);
+    const button = document.querySelector(`[onclick="toggleAssignmentMenu(${assignmentId})"]`);
+    
+    if (!menu || !button) return;
+    
+    // Close all other menus
+    document.querySelectorAll('.dropdown-menu').forEach(m => {
+        if (m !== menu && m.classList.contains('show')) {
+            m.classList.remove('show');
+            const btn = m.previousElementSibling;
+            if (btn) {
+                btn.setAttribute('aria-expanded', 'false');
+            }
+        }
+    });
+    
+    // Toggle this menu
+    const isOpen = menu.classList.toggle('show');
+    button.setAttribute('aria-expanded', isOpen ? 'true' : 'false');
+    
+    // Close on outside click
+    if (isOpen) {
+        setTimeout(() => {
+            const closeOnOutsideClick = (e) => {
+                if (!menu.contains(e.target) && !button.contains(e.target)) {
+                    closeAssignmentMenu(assignmentId);
+                    document.removeEventListener('click', closeOnOutsideClick);
+                }
+            };
+            document.addEventListener('click', closeOnOutsideClick);
+        }, 0);
+    }
+};
+
 window.viewHistory = async function(assignmentId) {
+    closeAssignmentMenu(assignmentId);
     // Switch to history view and filter by assignment
     const historyView = document.getElementById('history-view');
     const dashboardView = document.getElementById('dashboard-view');
@@ -281,6 +340,7 @@ window.viewHistory = async function(assignmentId) {
 };
 
 window.editAssignment = async function(assignmentId) {
+    closeAssignmentMenu(assignmentId);
     const assignment = assignments.find(a => a.id === assignmentId);
     if (!assignment) {
         showToast('Assignment not found', 'error');
@@ -290,6 +350,7 @@ window.editAssignment = async function(assignmentId) {
 };
 
 window.stopAssignment = async function(assignmentId) {
+    closeAssignmentMenu(assignmentId);
     const assignment = assignments.find(a => a.id === assignmentId);
     if (!assignment) {
         showToast('Assignment not found', 'error');
