@@ -436,13 +436,20 @@ If port 8080 is already in use:
 
 ## 🔒 Security Notes
 
-- This application is designed for **local/home network use**
-- No authentication is implemented - do not expose to the internet without proper security
-- For production deployment, consider adding:
-  - Authentication/authorization
-  - HTTPS/TLS encryption
-  - Rate limiting
-  - Input validation hardening
+⚠️ **IMPORTANT: This application is designed for HOME/LOCAL NETWORK USE ONLY.**
+
+- **DO NOT expose this application to the internet** - it has no authentication and is not designed for public-facing deployment
+- This application is intended for use on a private home network only
+- No authentication is implemented - all endpoints are publicly accessible
+- For detailed security information and vulnerabilities, see [Security Audit Report](docs/SECURITY_AUDIT_REPORT.md)
+
+**If you need to deploy this in a production or internet-facing environment, you must first implement:**
+- Authentication/authorization
+- HTTPS/TLS encryption
+- Rate limiting
+- CSRF protection
+- Input validation hardening
+- And address all issues documented in the [Security Audit Report](docs/SECURITY_AUDIT_REPORT.md)
 
 ## 📝 License
 
