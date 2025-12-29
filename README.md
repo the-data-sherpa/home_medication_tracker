@@ -1,10 +1,11 @@
 # Home Medication Tracker
 
-[![Version](https://img.shields.io/badge/version-1.0.0-blue.svg)](https://github.com/the-data-sherpa/home_medication_tracker/releases/tag/v1.0.0)
+[![Version](https://img.shields.io/badge/version-1.0.1-blue.svg)](https://github.com/the-data-sherpa/home_medication_tracker/releases/tag/v1.0.1)
+[![Docker Hub](https://img.shields.io/badge/docker-datasherpa%2Fhome--medication--tracker-blue)](https://hub.docker.com/r/datasherpa/home-medication-tracker)
 
 A mobile-friendly web application for tracking home medications for family members. Built with FastAPI, SQLite, and vanilla JavaScript, containerized with Docker for easy deployment.
 
-> **Current Version**: 1.0.0 - See [CHANGELOG.md](CHANGELOG.md) for release notes and version history.
+> **Current Version**: 1.0.1 - See [CHANGELOG.md](CHANGELOG.md) for release notes and version history.
 
 ## 🎯 Overview
 
@@ -54,11 +55,54 @@ Home Medication Tracker helps families manage medications with features like:
 
 ### Prerequisites
 
-- Docker and Docker Compose installed
+- Docker installed
   - [Install Docker](https://docs.docker.com/get-docker/)
-  - [Install Docker Compose](https://docs.docker.com/compose/install/)
 
-### Installation & Running
+### Option 1: Using Docker Hub (Recommended)
+
+The easiest way to get started is using the pre-built image from Docker Hub:
+
+1. **Run the container:**
+   ```bash
+   docker run -d \
+     --name home-medication-tracker \
+     -p 8080:8000 \
+     -v $(pwd)/data:/app/data \
+     datasherpa/home-medication-tracker:latest
+   ```
+
+2. **Access the application:**
+   Open your browser and navigate to:
+   ```
+   http://localhost:8080
+   ```
+
+3. **First-time setup:**
+   - The database will be created automatically on first run
+   - Start by adding family members, then medications, then assign medications to family members
+
+**Using Docker Compose (with published image):**
+
+Create a `docker-compose.yml` file:
+```yaml
+services:
+  app:
+    image: datasherpa/home-medication-tracker:latest
+    ports:
+      - "8080:8000"
+    volumes:
+      - ./data:/app/data
+    environment:
+      - DATABASE_PATH=/app/data/medications.db
+    restart: unless-stopped
+```
+
+Then run:
+```bash
+docker-compose up -d
+```
+
+### Option 2: Building from Source
 
 1. **Clone the repository:**
    ```bash
@@ -81,8 +125,11 @@ Home Medication Tracker helps families manage medications with features like:
    - The database will be created automatically on first run
    - Start by adding family members, then medications, then assign medications to family members
 
+**Note:** The `docker-compose.yml` file in this repository builds from source. If you want to use the published Docker Hub image instead, update it as shown in Option 1 above.
+
 ### Stopping the Application
 
+**If using Docker Compose:**
 ```bash
 docker-compose down
 ```
@@ -90,6 +137,19 @@ docker-compose down
 To stop and remove all data (including database):
 ```bash
 docker-compose down -v
+```
+
+**If using Docker run command:**
+```bash
+docker stop home-medication-tracker
+docker rm home-medication-tracker
+```
+
+To also remove data volume:
+```bash
+docker stop home-medication-tracker
+docker rm home-medication-tracker
+rm -rf ./data
 ```
 
 ## 📁 Project Structure
@@ -130,7 +190,8 @@ home_medication_tracker/
 │       └── medications.js     # Medication management
 ├── data/                       # Database storage (created automatically)
 │   └── medications.db         # SQLite database
-├── docker-compose.yml
+├── Dockerfile                  # Root Dockerfile for Docker Hub (includes frontend)
+├── docker-compose.yml          # Docker Compose configuration
 └── README.md
 ```
 
@@ -160,16 +221,49 @@ The SQLite database is stored in the `./data` directory, which is mounted as a D
 
 ### Environment Variables
 
-The application can be configured via environment variables in `docker-compose.yml`:
+The application can be configured via environment variables:
 
 - `DATABASE_PATH` - Path to SQLite database file (default: `/app/data/medications.db`)
 
+**With Docker Compose:**
+
+Add to `docker-compose.yml`:
+```yaml
+environment:
+  - DATABASE_PATH=/app/data/medications.db
+```
+
+**With Docker run:**
+
+Add `-e` flag:
+```bash
+docker run -d \
+  --name home-medication-tracker \
+  -p 8080:8000 \
+  -v $(pwd)/data:/app/data \
+  -e DATABASE_PATH=/app/data/medications.db \
+  datasherpa/home-medication-tracker:latest
+```
+
 ### Port Configuration
 
-To change the port, modify `docker-compose.yml`:
+**With Docker Compose:**
+
+Modify `docker-compose.yml`:
 ```yaml
 ports:
   - "YOUR_PORT:8000"  # Change YOUR_PORT to desired port
+```
+
+**With Docker run:**
+
+Change the port mapping:
+```bash
+docker run -d \
+  --name home-medication-tracker \
+  -p YOUR_PORT:8000 \  # Change YOUR_PORT to desired port
+  -v $(pwd)/data:/app/data \
+  datasherpa/home-medication-tracker:latest
 ```
 
 ## 📖 Usage Guide
@@ -233,6 +327,48 @@ The application provides a REST API at `/api`. When running locally, interactive
 - `GET /api/export/csv` - Export data as CSV
 - `POST /api/export/import/json` - Import data from JSON
 
+## 🐳 Docker Hub
+
+The application is published on Docker Hub and ready to use:
+
+**Docker Hub Repository:** [datasherpa/home-medication-tracker](https://hub.docker.com/r/datasherpa/home-medication-tracker)
+
+### Available Tags
+
+- `latest` - Latest stable release
+- `1.0.1` - Version 1.0.1 (current)
+- `1.0.0` - Version 1.0.0
+
+### Pull and Run
+
+```bash
+# Pull the latest image
+docker pull datasherpa/home-medication-tracker:latest
+
+# Run the container
+docker run -d \
+  --name home-medication-tracker \
+  -p 8080:8000 \
+  -v $(pwd)/data:/app/data \
+  datasherpa/home-medication-tracker:latest
+```
+
+### Using Specific Version
+
+```bash
+# Pull a specific version
+docker pull datasherpa/home-medication-tracker:1.0.1
+
+# Run with version tag
+docker run -d \
+  --name home-medication-tracker \
+  -p 8080:8000 \
+  -v $(pwd)/data:/app/data \
+  datasherpa/home-medication-tracker:1.0.1
+```
+
+For more examples, see the [Quick Start](#-quick-start) section above.
+
 ## 🛠️ Development
 
 ### Running Locally (Without Docker)
@@ -249,14 +385,32 @@ The frontend is served by FastAPI at `/static` when running the backend, or you 
 
 ### Building the Docker Image
 
+**Building from source (for development):**
+
+The repository includes a `docker-compose.yml` that builds from source:
 ```bash
 docker-compose build
 ```
 
+**Building for Docker Hub:**
+
+There's also a root-level `Dockerfile` that includes both backend and frontend (used for Docker Hub):
+```bash
+docker build -t datasherpa/home-medication-tracker:1.0.1 .
+```
+
+Note: The root `Dockerfile` includes the frontend files in the image, while the `backend/Dockerfile` used by docker-compose expects the frontend to be mounted as a volume.
+
 ### Viewing Logs
 
+**With Docker Compose:**
 ```bash
 docker-compose logs -f
+```
+
+**With Docker run:**
+```bash
+docker logs -f home-medication-tracker
 ```
 
 ## 🐛 Troubleshooting
