@@ -118,13 +118,24 @@ export function showAddMedicationForm() {
     
     showModal(content);
     
+    // Add validation
+    const nameInput = document.getElementById('med-name');
+    if (nameInput) {
+        nameInput.addEventListener('blur', () => validateField(nameInput));
+        nameInput.addEventListener('input', () => {
+            if (nameInput.validity.valid) {
+                showValidationMessage(nameInput, '', true);
+            }
+        });
+    }
+    
     // Toggle frequency type fields
     const frequencyType = document.getElementById('med-frequency-type');
     const fixedGroup = document.getElementById('med-frequency-fixed-group');
     const rangeGroup = document.getElementById('med-frequency-range-group');
     
-    frequencyType.addEventListener('change', (e) => {
-        if (e.target.value === 'fixed') {
+    const setFrequencyRequirements = (freqType) => {
+        if (freqType === 'fixed') {
             fixedGroup.style.display = 'block';
             rangeGroup.style.display = 'none';
             document.getElementById('med-frequency').required = true;
@@ -137,20 +148,34 @@ export function showAddMedicationForm() {
             document.getElementById('med-frequency-min').required = true;
             document.getElementById('med-frequency-max').required = true;
         }
+    };
+    
+    setFrequencyRequirements(frequencyType.value);
+    
+    frequencyType.addEventListener('change', (e) => {
+        setFrequencyRequirements(e.target.value);
     });
     
     document.getElementById('add-medication-form').addEventListener('submit', async (e) => {
         e.preventDefault();
         const submitButton = e.target.querySelector('button[type="submit"]');
+        
+        // Validate before submitting
+        const nameInput = document.getElementById('med-name');
+        if (!validateField(nameInput)) {
+            nameInput.focus();
+            return;
+        }
+        
         setButtonLoading(submitButton, true);
         
         try {
             const freqType = document.getElementById('med-frequency-type').value;
-            const nameValue = nameInput.value.trim();
-            const doseValue = doseInput.value.trim();
-            const freq = freqInput.value;
-            const freqMin = freqMinInput.value;
-            const freqMax = freqMaxInput.value;
+            const nameValue = document.getElementById('med-name').value.trim();
+            const doseValue = document.getElementById('med-dose').value.trim();
+            const freq = document.getElementById('med-frequency').value;
+            const freqMin = document.getElementById('med-frequency-min').value;
+            const freqMax = document.getElementById('med-frequency-max').value;
             
             const data = {
                 name: nameValue,
@@ -159,10 +184,25 @@ export function showAddMedicationForm() {
             };
             
             if (freqType === 'fixed') {
+                if (!freq || parseFloat(freq) <= 0) {
+                    showToast('Frequency must be greater than 0', 'error');
+                    setButtonLoading(submitButton, false);
+                    return;
+                }
                 data.default_frequency_hours = parseFloat(freq);
                 data.default_frequency_min_hours = null;
                 data.default_frequency_max_hours = null;
             } else {
+                if (!freqMin || !freqMax || parseFloat(freqMin) <= 0 || parseFloat(freqMax) <= 0) {
+                    showToast('Frequencies must be greater than 0', 'error');
+                    setButtonLoading(submitButton, false);
+                    return;
+                }
+                if (parseFloat(freqMin) >= parseFloat(freqMax)) {
+                    showToast('Minimum frequency must be less than maximum', 'error');
+                    setButtonLoading(submitButton, false);
+                    return;
+                }
                 data.default_frequency_hours = null;
                 data.default_frequency_min_hours = parseFloat(freqMin);
                 data.default_frequency_max_hours = parseFloat(freqMax);
